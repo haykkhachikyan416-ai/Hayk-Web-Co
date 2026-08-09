@@ -1,46 +1,61 @@
 # HAYK WEB CO. Project Memory
 
-## Current goal
-Create a complete, deployable Vite/React marketing website that earns trust and converts local-service business owners into website-review inquiries.
+## Current state
 
-## Current implementation
-Design direction approved. Repository and documentation initialized; application implementation is pending.
+The production-ready Browser Workshop marketing site is implemented. It is a responsive Vite/React application with complete interior routes, accessible contact handling, SEO assets, automated tests, and deployment configuration.
 
 ## Brand and design decisions
-- Browser Workshop direction: warm-white and near-black editorial sections with electric-blue interaction cues.
-- Hero signature: a browser composition transforms from an unfinished layout into a conversion-ready local-business page.
-- Approved palette: `#315CFF`, `#0B0D12`, `#F7F7F4`; supporting steel and pale-blue neutrals.
-- Logo will be reconstructed faithfully as deterministic SVG variants from the supplied light/dark references, not redesigned.
-- Concept work remains explicitly labeled and contains no fabricated results.
 
-## Technology stack
-Vite, React, strict TypeScript, Tailwind CSS, React Router DOM, Motion, Lucide React, React Helmet Async, Vitest, Testing Library, npm, Vercel-compatible serverless function.
+- Exact name: `HAYK WEB CO.`
+- Approved palette: electric blue `#315CFF`, near black `#0B0D12`, warm white `#F7F7F4`.
+- Direction: sharp Browser Workshop editorial layouts, quiet grids, browser-interface details, and restrained motion.
+- Hero signature: an unfinished browser composition resolves into a polished local-business page.
+- The header uses full light/dark logos at larger widths and compact marks on mobile.
+- Work examples are labeled `Demo Concept`; no clients, results, awards, or statistics are invented.
+
+## Technology
+
+Vite, React, strict TypeScript, Tailwind CSS, React Router DOM, Motion, Lucide React, Vitest, Testing Library, npm, and a Vercel-compatible Web API function. Fonts are self-hosted from reputable `@fontsource-variable` packages.
 
 ## Important files
-- `AGENTS.md`: durable project rules.
-- `src/content/site.ts`: editable business content.
-- `src/App.tsx`: lazy route definitions.
-- `api/contact.ts`: validated contact endpoint.
+
+- `src/content/site.ts`: source of truth for business details and reusable content.
+- `src/App.tsx`: lazy-loaded routes and shared layout.
+- `src/components/BrowserWorkshop.tsx`: interactive hero transformation.
+- `src/components/ContactForm.tsx`: accessible contact form states.
+- `api/contact.ts`: validation, spam controls, rate limit, and optional Resend delivery.
+- `src/styles/index.css`: tokens, responsive layout, focus treatment, and reduced-motion rules.
+- `scripts/browser_qa.py`: required viewport and route browser checks.
+- `vercel.json`: Vite SPA rewrite, API function support, and security headers.
 - `docs/superpowers/specs/2026-08-08-hayk-web-co-design.md`: approved design.
 - `docs/superpowers/plans/2026-08-08-hayk-web-co-site.md`: implementation plan.
 
-## Completed work
-- Read the full brief and applicable workflow instructions.
-- Confirmed the project directory was empty and no hosting configuration existed.
-- Selected Browser Workshop direction and received approval.
+## Implemented routes
 
-## Remaining work
-Scaffold the application, implement behavior and routes, add SEO/contact handling, run automated and browser QA, fix findings, and prepare deployment guidance.
+`/`, `/services`, `/work`, `/about`, `/contact`, `/privacy`, plus a custom 404 route.
 
-## Known issues
-The user-supplied logos are visible in the brief but were not provided as standalone files; code-native SVG reconstructions will preserve the approved composition.
+## Verification — 2026-08-09
 
-## Test results
-Not run yet; no application exists.
+- Prettier: all matched files formatted.
+- ESLint: exit 0.
+- Strict TypeScript: exit 0.
+- Vitest: 5 files, 17 tests passed.
+- Production build: 2,119 modules transformed; exit 0.
+- Browser QA: all seven routes at 375×812, 430×932, 768×1024, 1440×900, and 1920×1080; zero failures and zero console messages.
+- Browser checks cover overflow, metadata, canonical URLs, image loading, header alignment, responsive logos/menu, keyboard Escape, form errors, touch targets, and reduced motion.
+- Vite development and production preview: Local and Network URLs printed; homepage returned HTTP 200.
+- `npm audit` against the official npm registry: 0 vulnerabilities.
 
-## Deployment status
-Not deployed. Target configuration: Vercel with SPA rewrites and `/api/contact` function.
+## Contact and deployment
+
+The endpoint sends through Resend when these production variables are configured: `RESEND_API_KEY` and `CONTACT_TO_EMAIL`; `CONTACT_FROM_EMAIL` is optional. No secrets or submissions are stored in the repository. Local Vite shows a friendly explanation because it does not emulate the production function runtime.
+
+Vercel configuration is ready, but the site is not deployed because no authenticated hosting target was provided. Before launch, confirm the assumed canonical domain `https://haykwebco.com` and the assumed public email `hello@haykwebco.com` in `src/content/site.ts`.
+
+## Known limitation
+
+The supplied logos were reference images rather than standalone vector files. Faithful deterministic SVG variants were reconstructed from those references. Replace them with the original production vector exports if exact source artwork becomes available.
 
 ## Next recommended action
-Execute the implementation plan beginning with package setup and failing behavior tests.
 
+Confirm the domain/email, add the contact environment variables in the hosting dashboard, deploy, and complete one live submission test.

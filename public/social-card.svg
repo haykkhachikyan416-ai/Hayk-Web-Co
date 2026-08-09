@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">HAYK WEB CO.</title>
+  <desc id="desc">Websites that turn local attention into real customers.</desc>
+  <rect width="1200" height="630" fill="#0B0D12"/>
+  <g opacity=".11" stroke="#F7F7F4"><path d="M0 90h1200M0 180h1200M0 270h1200M0 360h1200M0 450h1200M0 540h1200"/><path d="M90 0v630M180 0v630M270 0v630M360 0v630M450 0v630M540 0v630M630 0v630M720 0v630M810 0v630M900 0v630M990 0v630M1080 0v630"/></g>
+  <path d="M930-50 1170 680" stroke="#315CFF" stroke-width="5"/>
+  <g transform="translate(72 65) scale(.42)">
+    <path fill="#315CFF" d="M16 8h248a16 16 0 0 1 16 16v50H16V24A16 16 0 0 1 32 8Z"/>
+    <circle cx="44" cy="41" r="9" fill="#F7F7F4"/><circle cx="76" cy="41" r="9" fill="#F7F7F4"/><circle cx="108" cy="41" r="9" fill="#F7F7F4"/>
+    <path fill="#F7F7F4" d="M16 92h32v65h66V92h32v160h-32v-65H48v65H16Z"/>
+    <path fill="#315CFF" d="M114 252v-40l66-66 68 67V92h32v160h-32l-68-67Z"/>
+  </g>
+  <text x="210" y="140" fill="#F7F7F4" font-family="Arial,Helvetica,sans-serif" font-size="38" font-weight="700" letter-spacing="3">HAYK WEB CO.</text>
+  <text x="72" y="305" fill="#F7F7F4" font-family="Arial,Helvetica,sans-serif" font-size="74" font-weight="700"><tspan x="72">Websites that turn local</tspan><tspan x="72" dy="82">attention into customers.</tspan></text>
+  <text x="76" y="535" fill="#8FA6FF" font-family="Courier New,monospace" font-size="20" font-weight="700" letter-spacing="2">DESIGN / DEVELOPMENT / LOCAL GROWTH</text>
+</svg>

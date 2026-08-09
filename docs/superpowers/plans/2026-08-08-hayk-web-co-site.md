@@ -9,6 +9,7 @@
 **Tech Stack:** Vite, React, strict TypeScript, Tailwind CSS, React Router DOM, Motion, Lucide React, React Helmet Async, Vitest, Testing Library, npm.
 
 ## Global Constraints
+
 - Exact brand name: `HAYK WEB CO.` and exact primary colors `#315CFF`, `#0B0D12`, `#F7F7F4`.
 - Use only necessary reputable packages from the official npm registry and preserve `package-lock.json`.
 - Do not fabricate customers, testimonials, results, awards, statistics, employees, or experience claims.

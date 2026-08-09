@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 240" role="img" aria-labelledby="title">
+  <title id="title">HAYK WEB CO.</title>
+  <g transform="translate(10 18)" fill="#F7F7F4">
+    <path d="M20 8h210a18 18 0 0 1 18 18v34H20V26A18 18 0 0 1 38 8Z"/>
+    <circle cx="44" cy="34" r="8" fill="#0B0D12"/><circle cx="72" cy="34" r="8" fill="#0B0D12"/><circle cx="100" cy="34" r="8" fill="#0B0D12"/>
+    <path d="M20 76h28v62h58V76h28v148h-28v-58H48v58H20Z"/>
+    <path d="M106 224v-38l62-62 58 58V76h22v148h-22l-58-59Z"/>
+  </g>
+  <text x="305" y="150" fill="#F7F7F4" font-family="Arial, Helvetica, sans-serif" font-size="82" font-weight="700" letter-spacing="4">HAYK WEB CO.</text>
+</svg>

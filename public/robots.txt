@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://haykwebco.com/sitemap.xml
