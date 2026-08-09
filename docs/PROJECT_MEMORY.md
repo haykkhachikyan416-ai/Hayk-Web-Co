@@ -39,11 +39,12 @@ Vite, React, strict TypeScript, Tailwind CSS, React Router DOM, Motion, Lucide R
 - Prettier: all matched files formatted.
 - ESLint: exit 0.
 - Strict TypeScript: exit 0.
-- Vitest: 5 files, 17 tests passed.
+- Vitest: 6 files, 18 tests passed.
 - Production build: 2,119 modules transformed; exit 0.
 - Browser QA: all seven routes at 375×812, 430×932, 768×1024, 1440×900, and 1920×1080; zero failures and zero console messages.
 - Browser checks cover overflow, metadata, canonical URLs, image loading, header alignment, responsive logos/menu, keyboard Escape, form errors, touch targets, and reduced motion.
 - Vite development and production preview: Local and Network URLs printed; homepage returned HTTP 200.
+- Bootstrap fallback: a blocked or failed JavaScript startup now displays recovery guidance instead of a blank page.
 - `npm audit` against the official npm registry: 0 vulnerabilities.
 
 ## Contact and deployment
