@@ -12,6 +12,17 @@ function renderRoute(path: string) {
 }
 
 describe('site routing', () => {
+  it('renders the homepage immediately without a route-loading placeholder', () => {
+    renderRoute('/')
+
+    expect(
+      screen.getByRole('heading', {
+        name: /websites that turn local attention into real customers/i,
+      }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('status', { name: /loading page/i })).not.toBeInTheDocument()
+  })
+
   it('renders shared navigation and the services route', async () => {
     renderRoute('/services')
 

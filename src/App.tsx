@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { SiteLayout } from './components/layout/SiteLayout'
+import HomePage from './pages/HomePage'
 
-const HomePage = lazy(() => import('./pages/HomePage'))
 const ServicesPage = lazy(() => import('./pages/ServicesPage'))
 const WorkPage = lazy(() => import('./pages/WorkPage'))
 const AboutPage = lazy(() => import('./pages/AboutPage'))
