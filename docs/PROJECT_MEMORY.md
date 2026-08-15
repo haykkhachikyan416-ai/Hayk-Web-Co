@@ -100,6 +100,22 @@ The error boundary added earlier did its job here — it surfaced the exact `Typ
 - Browser QA against installed Chrome 151.0.7922.76: all seven routes at all five viewports; zero failures and zero console messages.
 - Manual pass in Chrome 151: homepage plus navigation through every route with no crash panel and an empty console.
 
+## Zero-setup email delivery — 2026-08-14
+
+Resend needs an account plus DNS records on a verified domain before mail reliably reaches an inbox, which was too much setup for a first launch. `api/contact.ts` now supports Web3Forms as a first-choice provider and keeps Resend as a fallback.
+
+- `WEB3FORMS_ACCESS_KEY` alone is enough to deliver. No account, no domain, no DNS.
+- Web3Forms sends from its own SPF/DKIM-aligned domain, so deliverability does not depend on a new domain's sending reputation. That is what keeps notifications out of spam.
+- The visitor's address is sent as `replyto`, so replying to a notification reaches the customer.
+- Provider selection: Web3Forms when its key is present, otherwise Resend when both `RESEND_API_KEY` and `CONTACT_TO_EMAIL` are set, otherwise an honest 503.
+- The Web3Forms access key is designed to be publicly visible, but it is still read from a server-only variable here so it never enters the browser bundle.
+
+Every spam control is provider-independent and unchanged: honeypot, minimum fill time, per-IP rate limit, body-size cap, and server-side revalidation. A honeypot hit returns success without contacting any mail service, which is covered by a test.
+
+## Line endings — 2026-08-14
+
+`core.autocrlf=true` is set on this machine, so a checkout rewrote the whole working tree to CRLF while Prettier's `endOfLine` default expects LF. `npm run format:check` then failed on 57 files nobody had edited. A `.gitattributes` with `* text=auto eol=lf` pins the working tree to LF and keeps the check meaningful; binary assets are marked so they are never converted.
+
 ## Contact and deployment
 
 The endpoint sends through Resend when these production variables are configured: `RESEND_API_KEY` and `CONTACT_TO_EMAIL`; `CONTACT_FROM_EMAIL` is optional. No secrets or submissions are stored in the repository. Local Vite shows a friendly explanation because it does not emulate the production function runtime.

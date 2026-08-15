@@ -37,13 +37,29 @@ npm run preview
 
 ## Contact email setup
 
-The frontend is fully buildable without email credentials. The deployed form returns an honest configuration error until these server-only environment variables are set in the host:
+The frontend is fully buildable without email credentials. The deployed form returns an honest configuration error until one of the two options below is configured. `api/contact.ts` prefers Web3Forms and falls back to Resend.
+
+### Option A — Web3Forms (no domain required)
+
+Set one variable in the host:
+
+- `WEB3FORMS_ACCESS_KEY` — from web3forms.com. Enter the inbox that should receive submissions, and the key arrives by email.
+
+There is no account, no domain, and no DNS setup. Mail is delivered from Web3Forms' own authenticated sending domain, which is already aligned for SPF and DKIM, so messages land in the inbox rather than spam. Replies reach the visitor because their address is sent as `replyto`.
+
+### Option B — Resend (custom From address)
+
+Worth the extra setup only when the notification must come from your own domain. Requires a Resend account and DNS records on that domain.
 
 - `RESEND_API_KEY` — API key created in Resend.
 - `CONTACT_TO_EMAIL` — inbox that receives website-review requests.
 - `CONTACT_FROM_EMAIL` — optional sender on a Resend-verified domain. The development fallback is `HAYK WEB CO. <onboarding@resend.dev>`.
 
-Copy `.env.example` to `.env.local` only for local serverless testing. Never use a `VITE_` prefix for the Resend key because Vite exposes those values to the browser bundle.
+Copy `.env.example` to `.env.local` only for local serverless testing. Never use a `VITE_` prefix for any of these values, because Vite inlines `VITE_` variables into the browser bundle where anyone can read them.
+
+### Spam handling
+
+Independent of the provider, the endpoint keeps a honeypot field, a minimum fill time, a per-IP rate limit, a body-size cap, and full server-side revalidation. A honeypot hit returns a normal success response without contacting any mail service.
 
 ## Quality commands
 

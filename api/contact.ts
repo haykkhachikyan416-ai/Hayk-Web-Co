@@ -68,9 +68,10 @@ export default async function handler(request: Request): Promise<Response> {
   if (isRateLimited(getIp(request), now))
     return json({ ok: false, message: 'Too many requests. Please try again later.' }, 429)
 
+  const web3formsKey = process.env.WEB3FORMS_ACCESS_KEY
   const apiKey = process.env.RESEND_API_KEY
   const to = process.env.CONTACT_TO_EMAIL
-  if (!apiKey || !to)
+  if (!web3formsKey && (!apiKey || !to))
     return json(
       { ok: false, message: 'Email is not configured yet. Please contact HAYK WEB CO. directly.' },
       503,
@@ -89,17 +90,41 @@ export default async function handler(request: Request): Promise<Response> {
     'Project description:',
     cleaned.projectDescription,
   ].join('\n')
-  const result = await new Resend(apiKey).emails.send({
+  const subject = `Website review request — ${cleaned.businessName}`
+  const failed = json(
+    { ok: false, message: 'The message service could not accept the request. Please try again.' },
+    502,
+  )
+  const received = json(
+    { ok: true, message: 'Request received. HAYK WEB CO. will follow up soon.' },
+    200,
+  )
+
+  // Web3Forms needs only an access key, so it is the zero-setup path: no
+  // domain, no DNS records, no sending reputation to build. Preferred when
+  // present; Resend stays supported for sending from a custom domain.
+  if (web3formsKey) {
+    const sent = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        access_key: web3formsKey,
+        subject,
+        from_name: 'HAYK WEB CO. website',
+        // Puts the visitor's address in Reply-To, so a reply reaches them.
+        replyto: cleaned.email,
+        message: details,
+      }),
+    }).catch(() => null)
+    return sent?.ok ? received : failed
+  }
+
+  const result = await new Resend(apiKey!).emails.send({
     from: process.env.CONTACT_FROM_EMAIL || 'HAYK WEB CO. <onboarding@resend.dev>',
-    to: [to],
+    to: [to!],
     replyTo: cleaned.email,
-    subject: `Website review request — ${cleaned.businessName}`,
+    subject,
     text: details,
   })
-  if (result.error)
-    return json(
-      { ok: false, message: 'The message service could not accept the request. Please try again.' },
-      502,
-    )
-  return json({ ok: true, message: 'Request received. HAYK WEB CO. will follow up soon.' }, 200)
+  return result.error ? failed : received
 }

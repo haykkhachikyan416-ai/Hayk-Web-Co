@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import handler from '../../api/contact'
 
 const validPayload = {
@@ -25,6 +25,8 @@ const request = (body: object, method = 'POST') =>
 afterEach(() => {
   delete process.env.RESEND_API_KEY
   delete process.env.CONTACT_TO_EMAIL
+  delete process.env.WEB3FORMS_ACCESS_KEY
+  vi.restoreAllMocks()
 })
 
 describe('contact API', () => {
@@ -49,5 +51,45 @@ describe('contact API', () => {
     const response = await handler(request(validPayload))
     expect(response.status).toBe(503)
     expect(await response.json()).toMatchObject({ ok: false })
+  })
+
+  it('delivers through Web3Forms when only an access key is set', async () => {
+    process.env.WEB3FORMS_ACCESS_KEY = 'test-access-key'
+    const send = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response('{}', { status: 200 }))
+
+    const response = await handler(request(validPayload))
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toMatchObject({ ok: true })
+    const call = send.mock.calls[0]
+    expect(call).toBeDefined()
+    expect(call![0]).toBe('https://api.web3forms.com/submit')
+    const body = JSON.parse(String((call![1] as RequestInit).body))
+    expect(body.access_key).toBe('test-access-key')
+    // Replying to the notification must reach the visitor, not Web3Forms.
+    expect(body.replyto).toBe('jamie@example.com')
+    expect(body.message).toContain('Rivera Electric')
+  })
+
+  it('does not claim success when Web3Forms rejects the request', async () => {
+    process.env.WEB3FORMS_ACCESS_KEY = 'test-access-key'
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 500 }))
+
+    const response = await handler(request(validPayload))
+
+    expect(response.status).toBe(502)
+    expect(await response.json()).toMatchObject({ ok: false })
+  })
+
+  it('still honors the honeypot before contacting any mail service', async () => {
+    process.env.WEB3FORMS_ACCESS_KEY = 'test-access-key'
+    const send = vi.spyOn(globalThis, 'fetch')
+
+    const response = await handler(request({ ...validPayload, company: 'spam value' }))
+
+    expect(response.status).toBe(200)
+    expect(send).not.toHaveBeenCalled()
   })
 })
