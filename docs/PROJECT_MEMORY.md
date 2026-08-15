@@ -100,6 +100,18 @@ The error boundary added earlier did its job here — it surfaced the exact `Typ
 - Browser QA against installed Chrome 151.0.7922.76: all seven routes at all five viewports; zero failures and zero console messages.
 - Manual pass in Chrome 151: homepage plus navigation through every route with no crash panel and an empty console.
 
+## Vercel Web Analytics — 2026-08-14
+
+`@vercel/analytics` is mounted in `src/App.tsx` beside the router.
+
+- Import from `@vercel/analytics/react`, **not** `/next`. Vercel's setup page shows Next.js instructions; this is a Vite SPA.
+- Auto-tracking follows React Router navigations by itself, so no `route`/`path` props are needed.
+- In production the beacon is same-origin (`/_vercel/insights/script.js`), which the strict `script-src 'self'` CSP in `vercel.json` already permits. No CSP change was required.
+- The component is rendered only when `import.meta.env.PROD` is true. That beacon exists solely on a Vercel deployment, so mounting it elsewhere injects a tag that 404s on every page load. Setting `mode="development"` is **not** the alternative: that path loads `va.vercel-scripts.com`, which the CSP blocks and which would send local browsing to an external host.
+- `vite preview` sets `PROD`, so it also mounts analytics and shows the same 404 against localhost. That is expected. The browser QA sweep runs against the dev server, where nothing is injected, so its console check stays meaningful.
+
+Verified in Chrome 151: the dev server logs no analytics request at all, the production bundle still contains the tracking code for Vercel, and the QA sweep passes 35 route/viewport combinations with an empty console.
+
 ## FormSubmit delivery — 2026-08-14
 
 `FORMSUBMIT_TARGET` is now the first-choice provider, ahead of Web3Forms and Resend. It needs no account and no key — just the receiving address, POSTed to `https://formsubmit.co/ajax/<target>`.
