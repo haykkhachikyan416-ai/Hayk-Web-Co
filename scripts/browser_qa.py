@@ -124,6 +124,19 @@ def check_page(page: Page, route: str, width: int, height: int, failures: list[s
             if box and box["height"] < 44:
                 failures.append(f"Touch target below 44px: {label} control {index} ({box['height']})")
 
+def launch(playwright) -> tuple[object, str]:
+    """
+    Prefer the Chrome installed on this machine over Playwright's bundled
+    Chromium, which lags real releases. Chrome 151 began returning a Promise
+    from window.scrollTo and broke the site; the bundled build still returned
+    undefined, so a full green sweep hid a crash that every visitor would see.
+    """
+    try:
+        return playwright.chromium.launch(headless=True, channel="chrome"), "installed Chrome"
+    except Exception:
+        return playwright.chromium.launch(headless=True), "bundled Chromium (Chrome not found)"
+
+
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     failures: list[str] = []
@@ -131,7 +144,8 @@ def main() -> None:
     checked: list[str] = []
 
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=True)
+        browser, engine = launch(playwright)
+        print(f"Running against {engine} {browser.version}")
         for width, height in VIEWPORTS:
             context = browser.new_context(viewport={"width": width, "height": height}, device_scale_factor=1)
             page = context.new_page()
@@ -180,6 +194,7 @@ def main() -> None:
         failures.extend(f"Browser console: {message}" for message in unique_messages)
 
     summary = {
+        "engine": engine,
         "checked": checked,
         "viewports": [f"{width}x{height}" for width, height in VIEWPORTS],
         "routes": ROUTES,

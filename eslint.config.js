@@ -20,6 +20,18 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      // A concise-arrow effect silently returns whatever the last call returns,
+      // and React calls that as the cleanup. Chrome 151 started returning a
+      // Promise from window.scrollTo, which crashed the whole layout this way.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            'CallExpression[callee.name=/^use(Effect|LayoutEffect)$/] > ArrowFunctionExpression[body.type!="BlockStatement"]',
+          message:
+            'Give useEffect a braced body. A concise arrow returns its expression to React as the cleanup function.',
+        },
+      ],
     },
   },
 )

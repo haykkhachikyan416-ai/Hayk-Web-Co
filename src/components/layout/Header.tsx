@@ -9,7 +9,9 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false)
   const location = useLocation()
 
-  useEffect(() => setOpen(false), [location.pathname])
+  useEffect(() => {
+    setOpen(false)
+  }, [location.pathname])
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 36)

@@ -5,7 +5,11 @@ import { Header } from './Header'
 
 export function SiteLayout() {
   const { pathname } = useLocation()
-  useEffect(() => window.scrollTo({ top: 0, behavior: 'instant' }), [pathname])
+  // Braces matter here: newer Chrome returns a Promise from scrollTo, and a
+  // concise arrow would hand that back to React as the effect's cleanup.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [pathname])
   return (
     <>
       <Header />

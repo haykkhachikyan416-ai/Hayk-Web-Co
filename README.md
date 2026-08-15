@@ -18,6 +18,23 @@ Network: http://192.168.x.x:5173/
 
 Use the Local URL on this computer. To test on a phone, keep the terminal open, connect the phone and computer to the same Wi-Fi, and open the Network URL—not `localhost`. If Windows asks, allow Node.js on private networks.
 
+## If the page looks blank
+
+The site only exists while a server is running. A browser tab left open after the terminal was closed keeps its old title and favicon, so it can look like a broken website when the server is simply gone.
+
+1. Check the terminal. It must still show `➜ Local: http://localhost:5173/`. If it does not, run `npm run dev` again.
+2. Hard-refresh the tab with `Ctrl` + `Shift` + `R`.
+3. If a message appears instead of the page, read it—the site now reports the real failure rather than showing white. `Ctrl` + `Shift` + `J` opens the browser console for the full detail.
+
+Only one process can hold port 5173. If startup fails with `Port 5173 is already in use`, close the other terminal running the site, or end stray `node.exe` processes, then start it again.
+
+To view the real production output instead of the development server:
+
+```bash
+npm run build
+npm run preview
+```
+
 ## Contact email setup
 
 The frontend is fully buildable without email credentials. The deployed form returns an honest configuration error until these server-only environment variables are set in the host:
