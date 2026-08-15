@@ -1,0 +1,13 @@
+# Store and check out text files with LF everywhere. Without this, Windows'
+# core.autocrlf=true rewrites the working tree to CRLF, and `npm run
+# format:check` fails on files nobody edited because Prettier expects LF.
+* text=auto eol=lf
+
+# Never touch binary assets.
+*.png binary
+*.woff2 binary
+*.ico binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
