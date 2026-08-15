@@ -1,5 +1,6 @@
 import { motion, useReducedMotion } from 'motion/react'
 import { useRef } from 'react'
+import { ARROW_UP_RIGHT } from '../lib/glyphs'
 
 export function BrowserWorkshop() {
   const reduceMotion = useReducedMotion()
@@ -71,7 +72,7 @@ export function BrowserWorkshop() {
             <strong>Build with confidence.</strong>
             <p>Clear estimates. Skilled crews. A jobsite you can trust.</p>
             <div>
-              GET A QUOTE <span>↗</span>
+              GET A QUOTE <span>{ARROW_UP_RIGHT}</span>
             </div>
           </div>
           <div className="finished-image">
@@ -111,7 +112,7 @@ export function BrowserWorkshop() {
         animate={{ opacity: 1 }}
         transition={{ delay: 1.65 }}
       >
-        MOBILE READY ↗
+        MOBILE READY {ARROW_UP_RIGHT}
       </motion.div>
     </div>
   )

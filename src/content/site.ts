@@ -17,8 +17,13 @@ export type Concept = {
 export const site = {
   name: 'HAYK WEB CO.',
   shortName: 'HWC',
-  siteUrl: 'https://haykwebco.com',
-  email: 'hello@haykwebco.com',
+  // The live host. haykwebco.com has no DNS record yet, and pointing
+  // canonical tags, og:url, and the sitemap at a domain that does not
+  // resolve can keep the site out of search results entirely.
+  // When that domain goes live, change it in three places: here,
+  // public/robots.txt, and public/sitemap.xml.
+  siteUrl: 'https://hayk-web-co.vercel.app',
+  email: 'haykwebco@gmail.com',
   // Display form and the tel: target. E.164 keeps the link dialable from
   // any country and is what search engines expect in structured data.
   phone: '(747) 306-1007' as string | null,

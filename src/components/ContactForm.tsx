@@ -1,7 +1,9 @@
-import { CheckCircle2, LoaderCircle, Send } from 'lucide-react'
+import { CheckCircle2, LoaderCircle, Mail, Phone, Send } from 'lucide-react'
 import { useState } from 'react'
 import { cleanContactValues, emptyContactValues, validateContact } from '../lib/contact'
 import type { ContactErrors, ContactValues } from '../lib/contact'
+import { contactMailto } from '../lib/contact-fallback'
+import { site } from '../content/site'
 
 const businessTypes = [
   'Contractor',
@@ -56,6 +58,7 @@ export function ContactForm() {
   const [errors, setErrors] = useState<ContactErrors>({})
   const [state, setState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
+  const [fallback, setFallback] = useState('')
 
   const update = (name: keyof ContactValues, value: string) => {
     setValues((current) => ({ ...current, [name]: value }))
@@ -95,24 +98,16 @@ export function ContactForm() {
         body: JSON.stringify(cleaned),
       })
       const isJson = response.headers.get('content-type')?.includes('application/json')
-      const data = isJson
-        ? ((await response.json()) as { ok?: boolean; message?: string })
-        : {
-            ok: false,
-            message:
-              'The secure email endpoint is available after deployment configuration. Please email us directly for now.',
-          }
-      if (!response.ok || !data.ok)
-        throw new Error(data.message || 'The request could not be sent.')
+      const data = isJson ? ((await response.json()) as { ok?: boolean; message?: string }) : null
+      if (!response.ok || !data?.ok) throw new Error('send-failed')
       setState('success')
       setMessage(data.message || 'Request received. We will be in touch soon.')
-    } catch (error) {
+    } catch {
+      // Deliberately not surfacing the server's message. It is written for
+      // whoever configured the deployment ("Email is not configured yet"),
+      // which means nothing to a customer who just filled in nine fields.
       setState('error')
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : 'The request could not be sent. Please email us directly.',
-      )
+      setFallback(contactMailto(cleaned))
     }
   }
 
@@ -198,7 +193,24 @@ export function ContactForm() {
           role="alert"
           aria-label="Submission error"
         >
-          {message}
+          <p>
+            <strong>That didn’t go through.</strong> Nothing you typed is lost — send it straight to
+            us instead, and we’ll pick it up from there.
+          </p>
+          <div className="form-message__actions">
+            {/* Carries every answer into the draft, so a failed send never
+                asks the visitor to fill the form in a second time. */}
+            <a className="button button--small" href={fallback}>
+              <Mail size={16} aria-hidden="true" />
+              Email the request
+            </a>
+            {site.phone && (
+              <a className="button button--small button--ghost" href={site.phoneHref}>
+                <Phone size={16} aria-hidden="true" />
+                Call {site.phone}
+              </a>
+            )}
+          </div>
         </div>
       )}
       <button className="button form-submit" type="submit" disabled={state === 'loading'}>

@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ContactForm } from '../components/ContactForm'
 import { emptyContactValues, validateContact } from '../lib/contact'
+import { site } from '../content/site'
 
 const validValues = {
   ...emptyContactValues,
@@ -83,8 +84,9 @@ describe('contact form', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(/request received/i)
   })
 
-  it('keeps the form available after a server error', async () => {
+  it('hands a failed submission back to the visitor instead of losing it', async () => {
     const user = userEvent.setup()
+    // The exact shape the deployed endpoint returns with no mail provider set.
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ ok: false, message: 'Email is not configured yet.' }), {
         status: 503,
@@ -99,14 +101,31 @@ describe('contact form', () => {
     await completeRequiredFields(user)
     await user.click(screen.getByRole('button', { name: /request my free review/i }))
 
-    expect(await screen.findByRole('alert', { name: /submission error/i })).toHaveTextContent(
-      /not configured/i,
+    const alert = await screen.findByRole('alert', { name: /submission error/i })
+    // Server copy is written for whoever configured the deploy, not for a
+    // customer who just filled in nine fields.
+    expect(alert).not.toHaveTextContent(/not configured/i)
+
+    const mailto = within(alert).getByRole('link', { name: /email the request/i })
+    const href = decodeURIComponent(mailto.getAttribute('href')!)
+    expect(href).toContain(`mailto:${site.email}`)
+    // Every answer must survive, or the fallback just asks them to retype it.
+    expect(href).toContain(validValues.name)
+    expect(href).toContain(validValues.businessName)
+    expect(href).toContain(validValues.email)
+    expect(href).toContain(validValues.budget)
+    expect(href).toContain(validValues.projectDescription)
+
+    expect(within(alert).getByRole('link', { name: /call/i })).toHaveAttribute(
+      'href',
+      site.phoneHref,
     )
     expect(screen.getByRole('button', { name: /request my free review/i })).toBeEnabled()
   })
 
-  it('explains when the local Vite server has no function runtime', async () => {
+  it('offers the same fallback when the response is not JSON at all', async () => {
     const user = userEvent.setup()
+    // The local Vite server has no function runtime and serves index.html.
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response('<!doctype html>', {
         status: 404,
@@ -121,8 +140,25 @@ describe('contact form', () => {
     await completeRequiredFields(user)
     await user.click(screen.getByRole('button', { name: /request my free review/i }))
 
-    expect(await screen.findByRole('alert', { name: /submission error/i })).toHaveTextContent(
-      /secure email endpoint is available after deployment/i,
+    const alert = await screen.findByRole('alert', { name: /submission error/i })
+    expect(within(alert).getByRole('link', { name: /email the request/i })).toHaveAttribute(
+      'href',
+      expect.stringContaining(`mailto:${site.email}`),
     )
+  })
+
+  it('recovers from a network failure with no response to read', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'))
+    render(
+      <MemoryRouter>
+        <ContactForm />
+      </MemoryRouter>,
+    )
+    await completeRequiredFields(user)
+    await user.click(screen.getByRole('button', { name: /request my free review/i }))
+
+    const alert = await screen.findByRole('alert', { name: /submission error/i })
+    expect(within(alert).getByRole('link', { name: /email the request/i })).toBeInTheDocument()
   })
 })

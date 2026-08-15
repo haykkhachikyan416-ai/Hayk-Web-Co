@@ -2,6 +2,7 @@ import { Check } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { site } from '../../content/site'
 import { Reveal } from '../ui/Reveal'
+import { ARROW_UP_RIGHT } from '../../lib/glyphs'
 import { SectionIntro } from '../ui/SectionIntro'
 
 export function ScopeSection() {
@@ -30,7 +31,7 @@ export function ScopeSection() {
                 ))}
               </ul>
               <Link to="/contact">
-                Discuss this scope <span>↗</span>
+                Discuss this scope <span>{ARROW_UP_RIGHT}</span>
               </Link>
             </article>
           ))}

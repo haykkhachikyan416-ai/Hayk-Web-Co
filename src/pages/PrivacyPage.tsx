@@ -1,4 +1,5 @@
 import { Seo } from '../components/Seo'
+import { site } from '../content/site'
 
 export default function PrivacyPage() {
   return (
@@ -22,7 +23,11 @@ export default function PrivacyPage() {
           needed to deliver and secure the service.
         </p>
         <h2>Data choices</h2>
-        <p>You may request access, correction, or deletion by emailing hello@haykwebco.com.</p>
+        {/* Pulled from site content so it cannot drift out of sync again. */}
+        <p>
+          You may request access, correction, or deletion by emailing{' '}
+          <a href={`mailto:${site.email}`}>{site.email}</a>.
+        </p>
       </article>
     </>
   )

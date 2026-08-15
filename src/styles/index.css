@@ -186,6 +186,14 @@ h2 {
 .mobile-nav {
   display: none;
 }
+/* iOS renders U+2197 as a colour emoji by default. The VS15 selector in
+   ARROW_UP_RIGHT handles it; this keeps the glyph on a text font for any
+   engine that ignores the selector. */
+.mobile-nav__links > a:not(.button) > span:last-child,
+.concept-browser__button,
+.workshop-caption {
+  font-variant-emoji: text;
+}
 .page-hero {
   min-height: 480px;
   padding: clamp(6rem, 11vw, 10rem) 0 5rem;
@@ -1594,6 +1602,27 @@ h2 {
   background: #fff0ee;
   border-left: 3px solid #b42318;
 }
+.form-message p {
+  margin: 0;
+  font-weight: 500;
+}
+.form-message strong {
+  font-weight: 800;
+}
+.form-message__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.button--ghost {
+  background: transparent;
+  color: var(--blue);
+}
+.button--ghost:hover {
+  background: var(--mist);
+  color: var(--blue);
+}
 .form-success {
   min-height: 500px;
   display: flex;
@@ -1767,7 +1796,13 @@ h2 {
   .mobile-nav {
     display: grid;
     position: fixed;
-    inset: 76px 0 0;
+    /* --header-h is measured from the live header, so the panel stays flush
+       across breakpoints and rotation. The literal is only a first-paint
+       fallback for the frame before the measurement lands. */
+    inset: var(--header-h, 76px) 0 0;
+    z-index: 40;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     background: var(--paper);
     color: var(--ink);
     opacity: 0;
@@ -1901,7 +1936,7 @@ h2 {
     min-height: 68px;
   }
   .mobile-nav {
-    inset-block-start: 68px;
+    inset-block-start: var(--header-h, 68px);
   }
   .page-hero {
     min-height: 520px;
