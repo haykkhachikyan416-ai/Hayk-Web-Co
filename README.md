@@ -37,17 +37,25 @@ npm run preview
 
 ## Contact email setup
 
-The frontend is fully buildable without email credentials. The deployed form returns an honest configuration error until one of the two options below is configured. `api/contact.ts` prefers Web3Forms and falls back to Resend.
+The frontend is fully buildable without email credentials. The deployed form returns an honest configuration error until one of the options below is configured. `api/contact.ts` checks them in order: FormSubmit, then Web3Forms, then Resend.
 
-### Option A — Web3Forms (no domain required)
+### Option A — FormSubmit (no account, no key)
 
 Set one variable in the host:
 
+- `FORMSUBMIT_TARGET` — the address that should receive submissions.
+
+**Activation is required and easy to miss.** FormSubmit ignores the first submission and instead emails an "Activate Form" link. Until that link is clicked, the endpoint answers with a failure and no mail is delivered. So after deploying: submit the form once yourself, click the activation link, then submit again to confirm.
+
+After activating, FormSubmit issues a random alias you can use in place of the address. Switching `FORMSUBMIT_TARGET` to that alias keeps the real inbox out of the configuration.
+
+### Option B — Web3Forms (one key, no domain)
+
 - `WEB3FORMS_ACCESS_KEY` — from web3forms.com. Enter the inbox that should receive submissions, and the key arrives by email.
 
-There is no account, no domain, and no DNS setup. Mail is delivered from Web3Forms' own authenticated sending domain, which is already aligned for SPF and DKIM, so messages land in the inbox rather than spam. Replies reach the visitor because their address is sent as `replyto`.
+No account, no domain, and no DNS setup. Mail is delivered from Web3Forms' own authenticated sending domain, already aligned for SPF and DKIM, so messages land in the inbox rather than spam. Replies reach the visitor because their address is sent as `replyto`.
 
-### Option B — Resend (custom From address)
+### Option C — Resend (custom From address)
 
 Worth the extra setup only when the notification must come from your own domain. Requires a Resend account and DNS records on that domain.
 

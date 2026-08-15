@@ -68,10 +68,11 @@ export default async function handler(request: Request): Promise<Response> {
   if (isRateLimited(getIp(request), now))
     return json({ ok: false, message: 'Too many requests. Please try again later.' }, 429)
 
+  const formsubmitTarget = process.env.FORMSUBMIT_TARGET
   const web3formsKey = process.env.WEB3FORMS_ACCESS_KEY
   const apiKey = process.env.RESEND_API_KEY
   const to = process.env.CONTACT_TO_EMAIL
-  if (!web3formsKey && (!apiKey || !to))
+  if (!formsubmitTarget && !web3formsKey && (!apiKey || !to))
     return json(
       { ok: false, message: 'Email is not configured yet. Please contact HAYK WEB CO. directly.' },
       503,
@@ -100,9 +101,45 @@ export default async function handler(request: Request): Promise<Response> {
     200,
   )
 
-  // Web3Forms needs only an access key, so it is the zero-setup path: no
-  // domain, no DNS records, no sending reputation to build. Preferred when
-  // present; Resend stays supported for sending from a custom domain.
+  // FormSubmit needs no account at all — the target is either the receiving
+  // address or the alias it issues after activation. Preferred when set.
+  //
+  // It answers HTTP 200 even when it refuses the submission, and reports
+  // status as the STRING "true"/"false", so neither response.ok nor a plain
+  // truthiness check can be trusted. Both were verified against the live
+  // endpoint: an unactivated form returns 200 with {"success":"false"}.
+  if (formsubmitTarget) {
+    const endpoint = `https://formsubmit.co/ajax/${encodeURIComponent(formsubmitTarget)}`
+    const sent = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        _subject: subject,
+        // Replies go to the visitor rather than to FormSubmit.
+        _replyto: cleaned.email,
+        // reCAPTCHA would block a server-to-server POST.
+        _captcha: 'false',
+        _template: 'table',
+        name: cleaned.name,
+        business: cleaned.businessName,
+        email: cleaned.email,
+        phone: cleaned.phone || 'Not provided',
+        website: cleaned.currentWebsite || 'Not provided',
+        businessType: cleaned.businessType,
+        mainGoal: cleaned.mainGoal,
+        budget: cleaned.budget,
+        message: cleaned.projectDescription,
+      }),
+    }).catch(() => null)
+    if (!sent?.ok) return failed
+    const payload = (await sent.json().catch(() => null)) as { success?: unknown } | null
+    // String "false" is truthy, so compare against both real shapes.
+    const accepted = payload?.success === true || payload?.success === 'true'
+    return accepted ? received : failed
+  }
+
+  // Web3Forms needs only an access key, so it is also a zero-setup path: no
+  // domain, no DNS records, no sending reputation to build.
   if (web3formsKey) {
     const sent = await fetch('https://api.web3forms.com/submit', {
       method: 'POST',

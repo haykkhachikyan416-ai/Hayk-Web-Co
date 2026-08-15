@@ -100,6 +100,21 @@ The error boundary added earlier did its job here — it surfaced the exact `Typ
 - Browser QA against installed Chrome 151.0.7922.76: all seven routes at all five viewports; zero failures and zero console messages.
 - Manual pass in Chrome 151: homepage plus navigation through every route with no crash panel and an empty console.
 
+## FormSubmit delivery — 2026-08-14
+
+`FORMSUBMIT_TARGET` is now the first-choice provider, ahead of Web3Forms and Resend. It needs no account and no key — just the receiving address, POSTed to `https://formsubmit.co/ajax/<target>`.
+
+Two behaviors of that API were verified against the live endpoint and both defeat the obvious implementation:
+
+- It answers **HTTP 200 even when it refuses the submission**, so `response.ok` is not a delivery signal.
+- It reports status as the **string** `"true"`/`"false"`, and the non-empty string `"false"` is truthy in JavaScript. A plain `if (payload.success)` would tell customers their message was sent while nothing was delivered.
+
+The handler therefore compares `success` against both `true` and `'true'` explicitly. A test asserts the `"false"` case returns 502; it was confirmed to fail when the check is replaced with `Boolean(payload?.success)`.
+
+Other details: `_captcha: 'false'` is required because reCAPTCHA would otherwise block a server-to-server POST, and `_replyto` carries the visitor's address so replies reach the customer. Activation is a real operational step — FormSubmit swallows the first submission and emails an "Activate Form" link, so the form does not work until that link is clicked.
+
+The API tests now issue a distinct `x-forwarded-for` per request. The handler's rate limiter keeps module-level state that persists across tests, so a shared IP made later tests fail with 429 depending on execution order.
+
 ## Zero-setup email delivery — 2026-08-14
 
 Resend needs an account plus DNS records on a verified domain before mail reliably reaches an inbox, which was too much setup for a first launch. `api/contact.ts` now supports Web3Forms as a first-choice provider and keeps Resend as a fallback.
