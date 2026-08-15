@@ -19,7 +19,10 @@ export const site = {
   shortName: 'HWC',
   siteUrl: 'https://haykwebco.com',
   email: 'hello@haykwebco.com',
-  phone: null as string | null,
+  // Display form and the tel: target. E.164 keeps the link dialable from
+  // any country and is what search engines expect in structured data.
+  phone: '(747) 306-1007' as string | null,
+  phoneHref: 'tel:+17473061007',
   serviceAreas: ['Los Angeles', 'Glendale', 'Burbank', 'Surrounding areas', 'Remote'],
   socialLinks: [] as { label: string; href: string }[],
   navigation: [

@@ -26,6 +26,12 @@ export function Footer() {
             {site.email}
             <ArrowUpRight size={16} aria-hidden="true" />
           </a>
+          {site.phone && (
+            <a href={site.phoneHref}>
+              {site.phone}
+              <ArrowUpRight size={16} aria-hidden="true" />
+            </a>
+          )}
         </div>
       </div>
       <div className="shell site-footer__bottom">

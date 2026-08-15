@@ -18,6 +18,8 @@ export default function HomePage() {
     name: site.name,
     url: site.siteUrl,
     email: site.email,
+    // Search engines expect E.164, not the formatted display string.
+    ...(site.phone ? { telephone: site.phoneHref.replace('tel:', '') } : {}),
     areaServed: site.serviceAreas.filter((area) => area !== 'Remote'),
     description: site.hero.body,
     serviceType: 'Website design and development',

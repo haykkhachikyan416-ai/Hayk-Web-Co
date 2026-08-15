@@ -1,6 +1,6 @@
 import { Seo } from '../components/Seo'
 import { ContactForm } from '../components/ContactForm'
-import { Mail, MapPin, ShieldCheck } from 'lucide-react'
+import { Mail, MapPin, Phone, ShieldCheck } from 'lucide-react'
 import { site } from '../content/site'
 
 export default function ContactPage() {
@@ -48,6 +48,15 @@ export default function ContactPage() {
                   <a href={`mailto:${site.email}`}>{site.email}</a>
                 </span>
               </li>
+              {site.phone && (
+                <li>
+                  <Phone />
+                  <span>
+                    <strong>Rather talk?</strong>
+                    <a href={site.phoneHref}>{site.phone}</a>
+                  </span>
+                </li>
+              )}
             </ul>
           </aside>
           <ContactForm />
