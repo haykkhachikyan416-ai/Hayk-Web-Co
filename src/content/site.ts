@@ -14,6 +14,8 @@ export type Concept = {
   features: string[]
 }
 
+const heroTitleLines = ['Websites that turn', 'local attention', 'into real customers.'] as const
+
 export const site = {
   name: 'HAYK WEB CO.',
   shortName: 'HWC',
@@ -40,7 +42,8 @@ export const site = {
   secondaryCta: { label: 'View Demo Work', to: '/work' },
   hero: {
     eyebrow: 'Web design for local service businesses',
-    title: 'Websites that turn local attention into real customers.',
+    titleLines: heroTitleLines,
+    title: heroTitleLines.join(' '),
     body: 'HAYK WEB CO. designs fast, polished, mobile-first websites that help local businesses earn trust, generate calls, and turn visitors into customers.',
   },
   painPoints: [

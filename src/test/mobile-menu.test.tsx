@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -82,8 +82,10 @@ describe('mobile menu', () => {
 
     // Rotating a phone to a desktop-width layout hides the panel via CSS.
     // Without this the lock persisted and the page became unscrollable.
-    matches = true
-    listeners.forEach((fn) => fn({ matches: true } as MediaQueryListEvent))
+    act(() => {
+      matches = true
+      listeners.forEach((fn) => fn({ matches: true } as MediaQueryListEvent))
+    })
 
     expect(await screen.findByRole('button', { name: /open menu/i })).toBeInTheDocument()
     expect(document.body.style.overflow).toBe('')

@@ -11,12 +11,22 @@ export function HeroSection() {
       <div className="home-hero__grid shell">
         <motion.div
           className="home-hero__copy"
-          initial={reduceMotion ? false : { opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={false}
+          animate={reduceMotion ? undefined : { opacity: [0.86, 1], y: [16, 0] }}
           transition={{ duration: 0.7 }}
         >
           <p className="eyebrow">{site.hero.eyebrow}</p>
-          <h1>{site.hero.title}</h1>
+          <h1 aria-label={site.hero.title}>
+            {site.hero.titleLines.map((line, index) => (
+              <span
+                className={`home-hero__title-line${index === site.hero.titleLines.length - 1 ? ' home-hero__title-line--signal' : ''}`}
+                aria-hidden="true"
+                key={line}
+              >
+                {line}
+              </span>
+            ))}
+          </h1>
           <p className="home-hero__body">{site.hero.body}</p>
           <div className="hero-actions">
             <Link className="button" to={site.primaryCta.to}>

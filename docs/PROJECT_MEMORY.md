@@ -2,14 +2,14 @@
 
 ## Current state
 
-The production-ready Browser Workshop marketing site is implemented. It is a responsive Vite/React application with complete interior routes, accessible contact handling, SEO assets, automated tests, and deployment configuration.
+The production-ready marketing site is implemented with the Electric Editorial homepage direction. It is a responsive Vite/React application with complete interior routes, accessible contact handling, SEO assets, automated tests, deployment configuration, and browser-tested motion behavior.
 
 ## Brand and design decisions
 
 - Exact name: `HAYK WEB CO.`
 - Approved palette: electric blue `#315CFF`, near black `#0B0D12`, warm white `#F7F7F4`.
-- Direction: sharp Browser Workshop editorial layouts, quiet grids, browser-interface details, and restrained motion.
-- Hero signature: an unfinished browser composition resolves into a polished local-business page.
+- Direction: Electric Editorial - sharp asymmetric layouts, quiet technical grids, dimensional browser-interface details, and restrained motion.
+- Hero signature: an unfinished browser composition resolves into a polished local-business page while one electric-blue build beam connects the transformation to the final CTA.
 - The header uses full light/dark logos at larger widths and compact marks on mobile.
 - Work examples are labeled `Demo Concept`; no clients, results, awards, or statistics are invented.
 
@@ -22,6 +22,7 @@ Vite, React, strict TypeScript, Tailwind CSS, React Router DOM, Motion, Lucide R
 - `src/content/site.ts`: source of truth for business details and reusable content.
 - `src/App.tsx`: lazy-loaded routes and shared layout.
 - `src/components/BrowserWorkshop.tsx`: interactive hero transformation.
+- `src/components/ui/Reveal.tsx`: fail-open in-view polish; content never starts visually hidden.
 - `src/components/ContactForm.tsx`: accessible contact form states.
 - `api/contact.ts`: validation, spam controls, rate limit, and optional Resend delivery.
 - `src/styles/index.css`: tokens, responsive layout, focus treatment, and reduced-motion rules.
@@ -29,10 +30,37 @@ Vite, React, strict TypeScript, Tailwind CSS, React Router DOM, Motion, Lucide R
 - `vercel.json`: Vite SPA rewrite, API function support, and security headers.
 - `docs/superpowers/specs/2026-08-08-hayk-web-co-design.md`: approved design.
 - `docs/superpowers/plans/2026-08-08-hayk-web-co-site.md`: implementation plan.
+- `docs/superpowers/specs/2026-08-15-homepage-electric-editorial-design.md`: approved Electric Editorial homepage design.
+- `docs/superpowers/plans/2026-08-15-homepage-electric-editorial.md`: test-first redesign plan.
 
 ## Implemented routes
 
 `/`, `/services`, `/work`, `/about`, `/contact`, `/privacy`, plus a custom 404 route.
+
+## Electric Editorial homepage - 2026-08-15
+
+The homepage retains its original conversion story and business facts, but now carries a more distinctive visual system from the hero through the final CTA.
+
+- The hero headline is split into three visual rows while keeping the original accessible heading name. The final row uses electric blue as the sole headline accent.
+- The three hero rows and accessible heading are generated from the same `site.hero.titleLines` source, so content edits cannot make them diverge.
+- `BrowserWorkshop` adds a diagonal blue build beam, stronger depth, a rough-to-ready label, and mobile/reduced-motion containment.
+- Editorial status labels are real `aria-hidden` elements, and the hero is explicitly marked `Demo Concept / Local Service` so decoration never implies active client work.
+- Pain, services, why, demo work, process, performance, scopes, FAQ, and final CTA share a deliberate grid, depth, and motion vocabulary without adding dependencies or unsupported claims.
+- Reveal wrappers use `initial={false}` and light in-view keyframes. This fixes the former failure mode where off-screen sections appeared blank in full-page screenshots before IntersectionObserver activation.
+- Homepage board styling is scoped to `.work-section`; an early QA pass caught a global negative-inset outline widening the separate `/work` route by six pixels on mobile.
+- Browser QA now fails when a homepage reveal is hidden or has no layout box, the split headline is missing or clipped by the viewport, or the workshop beam is absent.
+- The 375 px headline deliberately wraps inside its visual rows; it no longer clips behind the hero's overflow boundary.
+- Fine-pointer tilt is disabled below 521 px, and reduced-motion QA verifies the fully resolved workshop, process rail, and diagonal final beam.
+- The existing mobile-menu rotation test now wraps its media-query callback in React `act`, removing the suite's prior state-update warning.
+
+### Verification
+
+- Prettier wrote all files with no remaining changes.
+- ESLint and strict TypeScript exited 0.
+- Vitest: 12 files, 49 tests passed with no warnings.
+- Production build: 2,125 modules transformed; exit 0.
+- Browser QA against installed Chrome 151.0.7922.138: all seven routes at 375x812, 430x932, 768x1024, 1440x900, and 1920x1080; zero failures and zero console messages.
+- `npm audit`: 0 vulnerabilities.
 
 ## Verification — 2026-08-09
 

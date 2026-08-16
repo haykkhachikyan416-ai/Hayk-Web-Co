@@ -60,7 +60,40 @@ def check_page(page: Page, route: str, width: int, height: int, failures: list[s
     if metrics["brokenImages"]:
         failures.append(f"Broken images: {label} ({metrics['brokenImages']})")
 
+    if route == "/":
+        hidden_reveals = page.locator('[data-reveal="true"]').evaluate_all(
+            """els => els.filter(el => {
+              const style = getComputedStyle(el)
+              const box = el.getBoundingClientRect()
+              return style.opacity === '0' || style.display === 'none' ||
+                style.visibility === 'hidden' || box.width === 0 || box.height === 0
+            }).length"""
+        )
+        if hidden_reveals:
+            failures.append(f"Homepage reveals started hidden: {label} ({hidden_reveals})")
+        if page.locator(".home-hero__title-line").count() != 3:
+            failures.append(f"Hero title treatment missing: {label}")
+        clipped_hero_lines = page.locator(".home-hero__title-line").evaluate_all(
+            "els => els.filter(el => { const box = el.getBoundingClientRect(); return box.left < -1 || box.right > window.innerWidth + 1 }).length"
+        )
+        if clipped_hero_lines:
+            failures.append(f"Hero title clipped by viewport: {label} ({clipped_hero_lines})")
+        if page.locator(".workshop-beam").count() != 1:
+            failures.append(f"Workshop beam missing: {label}")
+
     if width == 1440 and route == "/":
+        stage = page.locator(".workshop-stage")
+        frame = page.locator(".workshop-window")
+        box = stage.bounding_box()
+        page.wait_for_timeout(1100)
+        transform_before = frame.evaluate("el => getComputedStyle(el).transform")
+        if box:
+            page.mouse.move(box["x"] + box["width"] * 0.82, box["y"] + box["height"] * 0.24)
+            page.wait_for_timeout(250)
+            transform_after = frame.evaluate("el => getComputedStyle(el).transform")
+            if transform_after == transform_before:
+                failures.append(f"Workshop pointer tilt did not respond: {label}")
+            page.mouse.move(0, 0)
         page.keyboard.press("Tab")
         active_text = page.evaluate("document.activeElement?.textContent?.trim()")
         skip_box = page.locator(".skip-link").bounding_box()
@@ -69,6 +102,12 @@ def check_page(page: Page, route: str, width: int, height: int, failures: list[s
         page.evaluate("document.activeElement?.blur()")
 
     if width <= 430 and route == "/":
+        page.wait_for_timeout(1100)
+        mobile_workshop = page.locator(".workshop-window").evaluate(
+            "el => ({ transform: getComputedStyle(el).transform, perspective: getComputedStyle(el.parentElement).perspective })"
+        )
+        if mobile_workshop["transform"] != "none" or mobile_workshop["perspective"] != "none":
+            failures.append(f"Mobile workshop depth was not disabled: {label} ({mobile_workshop})")
         full_display = page.locator(".site-header .brand-logo__full").evaluate("el => getComputedStyle(el).display")
         mark_display = page.locator(".site-header .brand-logo__mark").evaluate("el => getComputedStyle(el).display")
         if full_display != "none" or mark_display == "none":
@@ -165,6 +204,31 @@ def main() -> None:
         reduced_page = reduced.new_page()
         reduced_page.goto(BASE_URL, wait_until="networkidle")
         reduced_page.locator(".workshop-window").wait_for(state="visible")
+        activate_scroll_reveals(reduced_page)
+        reduced_state = reduced_page.evaluate(
+            """() => ({
+              hiddenReveals: [...document.querySelectorAll('[data-reveal="true"]')].filter(el => {
+                const style = getComputedStyle(el)
+                const box = el.getBoundingClientRect()
+                return style.opacity === '0' || style.display === 'none' ||
+                  style.visibility === 'hidden' || box.width === 0 || box.height === 0
+              }).length,
+              workshopTransform: getComputedStyle(document.querySelector('.workshop-window')).transform,
+              finishedClip: getComputedStyle(document.querySelector('.workshop-canvas--finished')).clipPath,
+              processTransform: getComputedStyle(document.querySelector('.process-progress > span')).transform,
+              finalBeamTransform: getComputedStyle(document.querySelector('.final-cta__line')).transform,
+            })"""
+        )
+        if reduced_state["hiddenReveals"]:
+            failures.append(f"Reduced-motion content hidden: {reduced_state}")
+        if reduced_state["workshopTransform"] != "none":
+            failures.append(f"Reduced-motion workshop still transformed: {reduced_state}")
+        if "100%" in reduced_state["finishedClip"]:
+            failures.append(f"Reduced-motion finished workshop stayed clipped: {reduced_state}")
+        if reduced_state["processTransform"] == "none":
+            failures.append(f"Reduced-motion process line had no resolved scale: {reduced_state}")
+        if reduced_state["finalBeamTransform"] == "none":
+            failures.append(f"Reduced-motion final beam lost its diagonal: {reduced_state}")
         reduced_page.screenshot(path=str(OUTPUT_DIR / "home-reduced-motion.png"), full_page=True)
         reduced.close()
 

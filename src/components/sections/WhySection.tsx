@@ -28,6 +28,9 @@ const reasons = [
 export function WhySection() {
   return (
     <section className="section why-section">
+      <span className="why-section__status" aria-hidden="true">
+        Checked / Built / Ready
+      </span>
       <div className="shell why-grid">
         <Reveal>
           <SectionIntro

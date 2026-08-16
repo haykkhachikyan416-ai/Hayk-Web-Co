@@ -4,6 +4,9 @@ import { Reveal } from '../ui/Reveal'
 export function PerformanceSection() {
   return (
     <section className="section performance-section">
+      <span className="performance-section__label" aria-hidden="true">
+        Mobile / Designed First
+      </span>
       <div className="shell performance-grid">
         <Reveal className="performance-phone">
           <div className="phone-frame">

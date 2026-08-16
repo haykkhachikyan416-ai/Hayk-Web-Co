@@ -1,12 +1,23 @@
 import { ArrowUpRight } from 'lucide-react'
+import { motion, useReducedMotion } from 'motion/react'
 import { Link } from 'react-router-dom'
 import { site } from '../../content/site'
 import { Reveal } from '../ui/Reveal'
 
 export function FinalCta() {
+  const reduceMotion = useReducedMotion()
+
   return (
     <section className="final-cta">
-      <div className="final-cta__line" aria-hidden="true" />
+      <motion.div
+        className="final-cta__line"
+        data-testid="final-build-beam"
+        aria-hidden="true"
+        initial={reduceMotion ? false : { clipPath: 'inset(0 0 100% 0)' }}
+        whileInView={reduceMotion ? undefined : { clipPath: 'inset(0)' }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 1, ease: [0.77, 0, 0.18, 1] }}
+      />
       <Reveal className="shell final-cta__inner">
         <p className="eyebrow">A useful first step</p>
         <h2>Your website should make the next customer easier to win.</h2>
