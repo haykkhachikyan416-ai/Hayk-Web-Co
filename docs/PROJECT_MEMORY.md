@@ -171,6 +171,87 @@ Every spam control is provider-independent and unchanged: honeypot, minimum fill
 
 `core.autocrlf=true` is set on this machine, so a checkout rewrote the whole working tree to CRLF while Prettier's `endOfLine` default expects LF. `npm run format:check` then failed on 57 files nobody had edited. A `.gitattributes` with `* text=auto eol=lf` pins the working tree to LF and keeps the check meaningful; binary assets are marked so they are never converted.
 
+## Contact endpoint was dead in production — 2026-08-19
+
+**Every submission to `/api/contact` on the live deployment was failing**, and had been since
+launch. Probing `hayk-web-co.vercel.app` showed two symptoms:
+
+- Every `POST` returned HTTP 500 `FUNCTION_INVOCATION_FAILED`, regardless of payload —
+  including the honeypot path, which returns at line 60 before any environment variable is
+  read. So the crash was not in the business logic and not a missing provider key.
+- `GET` did not return 405. It hung until the gateway gave up.
+
+Cause: `api/contact.ts` has the Web signature `(request: Request) => Response`, which is the
+**Edge** runtime's contract, but the file declared no runtime, so Vercel used the default
+**Node** runtime and called it as `(req, res)`. Node's `req.headers` is a plain object with
+no `.get`, so `request.headers.get('content-length')` threw on every POST; and returning a
+`Response` writes nothing to Node's `res`, so GET was never answered. The two symptoms look
+unrelated but have one cause.
+
+Fix: `export const config = { runtime: 'edge' }`. Do not remove it.
+
+Consequences worth knowing:
+
+- Local tests never caught this. Vitest calls the handler directly with a real Web `Request`,
+  which is the Edge shape — so the suite was green against a production endpoint that was
+  100% broken. A passing `contact-api.test.ts` says nothing about the deployed runtime.
+- `resend` is now imported with a dynamic `await import()` inside its own branch rather than
+  at the top of the file. It ships no edge export condition and pulls Node built-ins; a
+  top-level import risks failing at module load and taking down _every_ request, including
+  the FormSubmit path that never touches it.
+- **Still unverified: whether any mail provider is actually configured.** Everything 500s
+  before reaching that check, so the 503 "not configured" branch was unreachable and could
+  not be observed. After deploying this fix, confirm one of `FORMSUBMIT_TARGET`,
+  `WEB3FORMS_ACCESS_KEY`, or the `RESEND_API_KEY` + `CONTACT_TO_EMAIL` pair is set in Vercel,
+  then complete one live submission. If FormSubmit is the provider, its activation link must
+  be clicked before anything is delivered.
+
+## Quote-request friction pass — 2026-08-19
+
+The contact form required seven fields. It now requires three things: a name, one way to
+reply, and a sentence about the work.
+
+- `validateContact` in `src/lib/contact.ts` is the single source of truth for both the browser
+  and the server, so relaxing it in one place moved both together.
+- Email and phone are individually optional but **jointly required**. That error belongs to
+  the pair, not to either input, so `ContactErrors` gained a non-field `contactMethod` key and
+  the two inputs share one message. A malformed value in either is still rejected — a typo in
+  the only reply route means the answer never arrives.
+- Business name, business type, main goal, budget, and current website are all optional and
+  live in a closed `<details>` disclosure. Submitting with an error inside it forces it open,
+  or the message would be announced but invisible.
+- `QuickQuoteForm` in the hero posts to the same endpoint with `source: 'quick-quote-hero'`;
+  the full form sends `contact-page`. One combined "email or phone" field keeps it to three
+  inputs, split by `splitContactMethod`. The existing "Free website review" CTAs are unchanged.
+- Optional answers left blank now travel as `Not provided` and the subject falls back to the
+  person's name, so a fast-path lead cannot email a dangling `Budget:` or a subject that
+  trails off after the dash. `_replyto`/`replyto` is **omitted entirely** for a phone-only
+  lead — FormSubmit rejects a submission carrying an empty one.
+- `site.responsePromise` carries the one-line commitment reused beside every CTA. It promises
+  response time and no mailing list only; no testimonials, logos, ratings, or client claims
+  were added, and the `Demo Concept` labelling is untouched.
+
+Two contrast bugs were caught by measuring rather than by eye, both introduced by this work:
+the hero sets `color: var(--paper)` for its dark background, which the new white quick-quote
+card inherited (white-on-white title and labels), and `--steel` on the near-black CTA
+backgrounds reached only 3.3:1. Both now measure ≥ 4.5:1; the worst new value on the site is
+5.01:1.
+
+### Verification
+
+- Prettier, ESLint, strict TypeScript: exit 0. `npm audit`: 0 vulnerabilities.
+- Vitest: 13 files, 65 tests passed (was 49).
+- Production build: exit 0.
+- Browser QA: all seven routes at 375x812, 430x932, 768x1024, 1440x900, 1920x1080 — zero
+  failures, zero console messages.
+- Both submit flows driven end to end in a real browser at 1440x900 and 390x844, with
+  `/api/contact` intercepted: hero quick-quote and full contact form each reach an explicit
+  confirmation naming the one-business-day response; a 500 shows a visible error with a
+  direct contact route; submitting with no reply route is blocked and never calls fetch; a
+  phone number alone is accepted. No horizontal overflow at either width.
+- Not verified: live end-to-end delivery, which needs the runtime fix deployed and the
+  provider variables confirmed. See the section above.
+
 ## Contact and deployment
 
 The endpoint sends through Resend when these production variables are configured: `RESEND_API_KEY` and `CONTACT_TO_EMAIL`; `CONTACT_FROM_EMAIL` is optional. No secrets or submissions are stored in the repository. Local Vite shows a friendly explanation because it does not emulate the production function runtime.
@@ -183,4 +264,7 @@ The supplied logos were reference images rather than standalone vector files. Fa
 
 ## Next recommended action
 
-Confirm the domain/email, add the contact environment variables in the hosting dashboard, deploy, and complete one live submission test.
+Deploy the Edge-runtime fix in `api/contact.ts` — until it ships, every quote request on the
+live site still fails. Then confirm a mail provider variable is set in Vercel and complete one
+live submission end to end. Confirming the assumed domain `https://haykwebco.com` remains
+outstanding from the earlier launch checklist.

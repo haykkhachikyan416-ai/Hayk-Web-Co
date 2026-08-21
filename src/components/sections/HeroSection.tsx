@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { Link } from 'react-router-dom'
 import { site } from '../../content/site'
 import { BrowserWorkshop } from '../BrowserWorkshop'
+import { QuickQuoteForm } from '../QuickQuoteForm'
 
 export function HeroSection() {
   const reduceMotion = useReducedMotion()
@@ -38,6 +39,8 @@ export function HeroSection() {
               <ArrowDown size={16} />
             </Link>
           </div>
+          <p className="hero-promise">{site.responsePromise}</p>
+          <QuickQuoteForm />
         </motion.div>
         <BrowserWorkshop />
       </div>

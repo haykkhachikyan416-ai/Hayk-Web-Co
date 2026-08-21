@@ -17,27 +17,65 @@ const validValues = {
   projectDescription: 'We need a clear website for residential electrical services in Glendale.',
 }
 
-async function completeRequiredFields(user: ReturnType<typeof userEvent.setup>) {
+/** The whole fast path: a name, one way to reply, and a sentence. */
+async function completeFastPath(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/^name/i), validValues.name)
-  await user.type(screen.getByLabelText(/business name/i), validValues.businessName)
   await user.type(screen.getByLabelText(/^email/i), validValues.email)
-  await user.selectOptions(screen.getByLabelText(/business type/i), validValues.businessType)
-  await user.selectOptions(screen.getByLabelText(/main goal/i), validValues.mainGoal)
-  await user.selectOptions(screen.getByLabelText(/budget range/i), validValues.budget)
-  await user.type(screen.getByLabelText(/project description/i), validValues.projectDescription)
+  await user.type(screen.getByLabelText(/what do you need/i), validValues.projectDescription)
 }
 
 afterEach(() => vi.restoreAllMocks())
 
 describe('contact validation', () => {
-  it('reports missing required fields and invalid email addresses', () => {
+  it('requires only a name, a reply route, and a description', () => {
     const missing = validateContact(emptyContactValues)
     expect(missing.name).toMatch(/name/i)
-    expect(missing.businessName).toMatch(/business name/i)
-    expect(missing.projectDescription).toMatch(/tell us/i)
+    expect(missing.contactMethod).toMatch(/email address or a phone/i)
+    expect(missing.projectDescription).toMatch(/what you need/i)
 
+    // The four fields moved to the optional block must never block a submit.
+    expect(missing.businessName).toBeUndefined()
+    expect(missing.businessType).toBeUndefined()
+    expect(missing.mainGoal).toBeUndefined()
+    expect(missing.budget).toBeUndefined()
+    expect(missing.currentWebsite).toBeUndefined()
+  })
+
+  it('accepts either a phone or an email, and does not demand both', () => {
+    const base = {
+      ...emptyContactValues,
+      name: 'Jamie Rivera',
+      projectDescription: 'Need a new site for my shop.',
+    }
+    expect(validateContact({ ...base, email: 'jamie@example.com' })).toEqual({})
+    expect(validateContact({ ...base, phone: '(747) 306-1007' })).toEqual({})
+    // Neither one is the only rejection.
+    expect(validateContact(base).contactMethod).toBeTruthy()
+  })
+
+  it('still rejects a malformed reply route, so the answer can actually arrive', () => {
+    const base = {
+      ...emptyContactValues,
+      name: 'Jamie Rivera',
+      projectDescription: 'Need a new site for my shop.',
+    }
+    expect(validateContact({ ...base, email: 'not-an-email' }).email).toMatch(/valid email/i)
+    expect(validateContact({ ...base, phone: '12' }).phone).toMatch(/phone number/i)
     expect(validateContact({ ...validValues, email: 'not-an-email' }).email).toMatch(/valid email/i)
     expect(validateContact(validValues)).toEqual({})
+  })
+
+  it('validates a supplied website but tolerates an empty one', () => {
+    const base = {
+      ...emptyContactValues,
+      name: 'Jamie Rivera',
+      email: 'jamie@example.com',
+      projectDescription: 'Need a new site for my shop.',
+    }
+    expect(validateContact({ ...base, currentWebsite: 'example.com' }).currentWebsite).toMatch(
+      /complete website address/i,
+    )
+    expect(validateContact({ ...base, currentWebsite: '' }).currentWebsite).toBeUndefined()
   })
 })
 
@@ -53,8 +91,56 @@ describe('contact form', () => {
 
     await user.click(screen.getByRole('button', { name: /request my free review/i }))
 
-    expect(screen.getAllByRole('alert').length).toBeGreaterThan(3)
+    // Exactly three: name, the email/phone pair, and the description. A fourth
+    // would mean an optional field had crept back into the required path.
+    expect(screen.getAllByRole('alert')).toHaveLength(3)
     expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it('submits with only the fast-path fields filled in', async () => {
+    const user = userEvent.setup()
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ ok: true, message: 'Received' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+    render(
+      <MemoryRouter>
+        <ContactForm />
+      </MemoryRouter>,
+    )
+    await completeFastPath(user)
+    await user.click(screen.getByRole('button', { name: /request my free review/i }))
+
+    expect(await screen.findByRole('status')).toBeInTheDocument()
+    const body = JSON.parse(String(fetchSpy.mock.calls[0]?.[1]?.body))
+    expect(body.name).toBe(validValues.name)
+    expect(body.email).toBe(validValues.email)
+    // Untouched optional fields travel as empty strings, not as blockers.
+    expect(body.businessName).toBe('')
+    expect(body.budget).toBe('')
+    expect(body.source).toBe('contact-page')
+  })
+
+  it('confirms a response time rather than only clearing the form', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ ok: true, message: 'Received' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+    render(
+      <MemoryRouter>
+        <ContactForm />
+      </MemoryRouter>,
+    )
+    await completeFastPath(user)
+    await user.click(screen.getByRole('button', { name: /request my free review/i }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent(/within one business day/i)
+    expect(screen.queryByRole('button', { name: /request my free review/i })).toBeNull()
   })
 
   it('shows loading and then a success state', async () => {
@@ -70,7 +156,7 @@ describe('contact form', () => {
         <ContactForm />
       </MemoryRouter>,
     )
-    await completeRequiredFields(user)
+    await completeFastPath(user)
 
     await user.click(screen.getByRole('button', { name: /request my free review/i }))
     expect(screen.getByRole('button', { name: /sending your request/i })).toBeDisabled()
@@ -98,7 +184,7 @@ describe('contact form', () => {
         <ContactForm />
       </MemoryRouter>,
     )
-    await completeRequiredFields(user)
+    await completeFastPath(user)
     await user.click(screen.getByRole('button', { name: /request my free review/i }))
 
     const alert = await screen.findByRole('alert', { name: /submission error/i })
@@ -111,10 +197,10 @@ describe('contact form', () => {
     expect(href).toContain(`mailto:${site.email}`)
     // Every answer must survive, or the fallback just asks them to retype it.
     expect(href).toContain(validValues.name)
-    expect(href).toContain(validValues.businessName)
     expect(href).toContain(validValues.email)
-    expect(href).toContain(validValues.budget)
     expect(href).toContain(validValues.projectDescription)
+    // Optional fields left blank must not emit a dangling "Budget:" line.
+    expect(href).toContain('Budget: Not provided')
 
     expect(within(alert).getByRole('link', { name: /call/i })).toHaveAttribute(
       'href',
@@ -137,7 +223,7 @@ describe('contact form', () => {
         <ContactForm />
       </MemoryRouter>,
     )
-    await completeRequiredFields(user)
+    await completeFastPath(user)
     await user.click(screen.getByRole('button', { name: /request my free review/i }))
 
     const alert = await screen.findByRole('alert', { name: /submission error/i })
@@ -155,7 +241,7 @@ describe('contact form', () => {
         <ContactForm />
       </MemoryRouter>,
     )
-    await completeRequiredFields(user)
+    await completeFastPath(user)
     await user.click(screen.getByRole('button', { name: /request my free review/i }))
 
     const alert = await screen.findByRole('alert', { name: /submission error/i })

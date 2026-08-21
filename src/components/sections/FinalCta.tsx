@@ -29,6 +29,7 @@ export function FinalCta() {
           {site.primaryCta.label}
           <ArrowUpRight size={18} />
         </Link>
+        <p className="cta-promise">{site.responsePromise}</p>
       </Reveal>
     </section>
   )

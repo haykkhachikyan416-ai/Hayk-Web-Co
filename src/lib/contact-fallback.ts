@@ -9,22 +9,25 @@ import type { ContactValues } from './contact'
  * hands their answers back to them instead.
  */
 export function contactMailto(values: ContactValues): string {
+  const blank = 'Not provided'
   const body = [
     `Name: ${values.name}`,
-    `Business: ${values.businessName}`,
-    `Email: ${values.email}`,
-    `Phone: ${values.phone || 'Not provided'}`,
-    `Current website: ${values.currentWebsite || 'Not provided'}`,
-    `Business type: ${values.businessType}`,
-    `Main goal: ${values.mainGoal}`,
-    `Budget: ${values.budget}`,
+    `Business: ${values.businessName || blank}`,
+    `Email: ${values.email || blank}`,
+    `Phone: ${values.phone || blank}`,
+    `Current website: ${values.currentWebsite || blank}`,
+    `Business type: ${values.businessType || blank}`,
+    `Main goal: ${values.mainGoal || blank}`,
+    `Budget: ${values.budget || blank}`,
+    `Submitted from: ${values.source || 'unknown'}`,
     '',
-    'Project description:',
+    'What they need:',
     values.projectDescription,
   ].join('\n')
 
-  const subject = values.businessName
-    ? `Website review request — ${values.businessName}`
+  const subjectLabel = values.businessName || values.name
+  const subject = subjectLabel
+    ? `Website review request — ${subjectLabel}`
     : 'Website review request'
 
   // encodeURIComponent leaves these RFC 3986 sub-delimiters alone, and some

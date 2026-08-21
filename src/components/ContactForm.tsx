@@ -24,6 +24,15 @@ const goals = [
 ]
 const budgets = ['Under $3,000', '$3,000–$6,000', '$6,000–$10,000', '$10,000+', 'Not sure yet']
 
+/** Fields living inside the collapsed disclosure. */
+const OPTIONAL_FIELDS = [
+  'businessName',
+  'currentWebsite',
+  'businessType',
+  'mainGoal',
+  'budget',
+] as const satisfies readonly (keyof ContactValues)[]
+
 type FieldProps = {
   name: keyof ContactValues
   label: string
@@ -59,22 +68,43 @@ export function ContactForm() {
   const [state, setState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
   const [fallback, setFallback] = useState('')
+  // The optional block is a closed <details>, so an error on a field inside it
+  // would otherwise be announced but invisible. Submitting forces it open.
+  const [detailsOpen, setDetailsOpen] = useState(false)
 
   const update = (name: keyof ContactValues, value: string) => {
     setValues((current) => ({ ...current, [name]: value }))
-    if (errors[name]) setErrors((current) => ({ ...current, [name]: undefined }))
+    if (errors[name] || errors.contactMethod) {
+      setErrors((current) => ({
+        ...current,
+        [name]: undefined,
+        // Typing in either half of the pair clears the shared error.
+        ...(name === 'email' || name === 'phone' ? { contactMethod: undefined } : {}),
+      }))
+    }
   }
 
-  const inputProps = (name: keyof ContactValues) => ({
-    id: name,
-    name,
-    value: String(values[name]),
-    onChange: (
-      event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
-    ) => update(name, event.target.value),
-    'aria-invalid': Boolean(errors[name]),
-    'aria-describedby': errors[name] ? `${name}-error` : undefined,
-  })
+  const inputProps = (name: keyof ContactValues) => {
+    // Email and phone are jointly required, so the pair error has to light up
+    // both inputs — neither is wrong on its own.
+    const invalid =
+      Boolean(errors[name]) ||
+      ((name === 'email' || name === 'phone') && Boolean(errors.contactMethod))
+    return {
+      id: name,
+      name,
+      value: String(values[name]),
+      onChange: (
+        event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+      ) => update(name, event.target.value),
+      'aria-invalid': invalid,
+      'aria-describedby': errors[name]
+        ? `${name}-error`
+        : invalid
+          ? 'contact-method-error'
+          : undefined,
+    }
+  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -83,8 +113,15 @@ export function ContactForm() {
     if (Object.keys(nextErrors).length) {
       setErrors(nextErrors)
       setState('idle')
+      // Reveal the optional block before focusing, or focus lands on a field
+      // the visitor cannot see.
+      if (OPTIONAL_FIELDS.some((field) => nextErrors[field])) setDetailsOpen(true)
       requestAnimationFrame(() =>
-        document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(),
+        document
+          .querySelector<HTMLElement>(
+            '.contact-form [aria-invalid="true"], .contact-form .field-error',
+          )
+          ?.focus(),
       )
       return
     }
@@ -116,8 +153,15 @@ export function ContactForm() {
       <div className="form-success" role="status">
         <CheckCircle2 aria-hidden="true" />
         <p className="eyebrow">Request received</p>
-        <h2>Thank you for the context.</h2>
-        <p>{message}</p>
+        <h2>Thanks — I&rsquo;ll get back to you within one business day.</h2>
+        {/* The response-time commitment is ours and is stated here directly.
+            The server's own line is kept underneath when it says something
+            more specific than the generic acknowledgement. */}
+        <p>
+          Nothing else is needed from you right now. If it is urgent, call{' '}
+          {site.phone ? <a href={site.phoneHref}>{site.phone}</a> : `us`}.
+        </p>
+        {message && <p className="form-success__detail">{message}</p>}
       </div>
     )
   }
@@ -129,64 +173,94 @@ export function ContactForm() {
         <input {...inputProps('company')} tabIndex={-1} autoComplete="off" />
       </div>
       <input type="hidden" name="startedAt" value={values.startedAt} />
+
+      {/* Fast path. These three answers are the whole requirement — everything
+          below the disclosure only sharpens the reply. */}
       <div className="form-grid">
         <Field name="name" label="Name" required error={errors.name}>
           <input {...inputProps('name')} autoComplete="name" />
         </Field>
-        <Field name="businessName" label="Business name" required error={errors.businessName}>
-          <input {...inputProps('businessName')} autoComplete="organization" />
-        </Field>
-        <Field name="email" label="Email" required error={errors.email}>
+        <Field name="email" label="Email" error={errors.email}>
           <input {...inputProps('email')} type="email" inputMode="email" autoComplete="email" />
         </Field>
-        <Field name="phone" label="Phone">
+        <Field name="phone" label="Phone" error={errors.phone}>
           <input {...inputProps('phone')} type="tel" inputMode="tel" autoComplete="tel" />
-        </Field>
-        <Field name="currentWebsite" label="Current website" error={errors.currentWebsite}>
-          <input
-            {...inputProps('currentWebsite')}
-            type="url"
-            inputMode="url"
-            placeholder="https://"
-          />
-        </Field>
-        <Field name="businessType" label="Business type" required error={errors.businessType}>
-          <select {...inputProps('businessType')}>
-            <option value="">Choose one</option>
-            {businessTypes.map((type) => (
-              <option key={type}>{type}</option>
-            ))}
-          </select>
-        </Field>
-        <Field name="mainGoal" label="Main goal" required error={errors.mainGoal}>
-          <select {...inputProps('mainGoal')}>
-            <option value="">Choose one</option>
-            {goals.map((goal) => (
-              <option key={goal}>{goal}</option>
-            ))}
-          </select>
-        </Field>
-        <Field name="budget" label="Budget range" required error={errors.budget}>
-          <select {...inputProps('budget')}>
-            <option value="">Choose one</option>
-            {budgets.map((budget) => (
-              <option key={budget}>{budget}</option>
-            ))}
-          </select>
         </Field>
         <Field
           name="projectDescription"
-          label="Project description"
+          label="What do you need?"
           required
           error={errors.projectDescription}
         >
           <textarea
             {...inputProps('projectDescription')}
-            rows={6}
-            placeholder="What is working today, and what needs to improve?"
+            rows={4}
+            placeholder="A new site for my plumbing company — the current one is hard to use on a phone."
           />
         </Field>
       </div>
+
+      {/* Neither email nor phone is required alone, so the "give me one of
+          them" error belongs to the pair, not to either input. */}
+      <p className="form-hint" id="contact-method-hint">
+        Email or phone — whichever you prefer. One is enough.
+      </p>
+      {errors.contactMethod && (
+        <p className="field-error" id="contact-method-error" role="alert" tabIndex={-1}>
+          {errors.contactMethod}
+        </p>
+      )}
+
+      <details
+        className="form-optional"
+        open={detailsOpen}
+        onToggle={(event) => setDetailsOpen(event.currentTarget.open)}
+      >
+        <summary>
+          <span>Add project details</span>
+          <span className="form-optional__badge">Optional</span>
+        </summary>
+        <p className="form-hint">
+          Skip this entirely if you like — it only helps me come back with a more useful answer.
+        </p>
+        <div className="form-grid">
+          <Field name="businessName" label="Business name" error={errors.businessName}>
+            <input {...inputProps('businessName')} autoComplete="organization" />
+          </Field>
+          <Field name="currentWebsite" label="Current website" error={errors.currentWebsite}>
+            <input
+              {...inputProps('currentWebsite')}
+              type="url"
+              inputMode="url"
+              placeholder="https://"
+            />
+          </Field>
+          <Field name="businessType" label="Business type" error={errors.businessType}>
+            <select {...inputProps('businessType')}>
+              <option value="">Choose one</option>
+              {businessTypes.map((type) => (
+                <option key={type}>{type}</option>
+              ))}
+            </select>
+          </Field>
+          <Field name="mainGoal" label="Main goal" error={errors.mainGoal}>
+            <select {...inputProps('mainGoal')}>
+              <option value="">Choose one</option>
+              {goals.map((goal) => (
+                <option key={goal}>{goal}</option>
+              ))}
+            </select>
+          </Field>
+          <Field name="budget" label="Budget range" error={errors.budget}>
+            <select {...inputProps('budget')}>
+              <option value="">Choose one</option>
+              {budgets.map((budget) => (
+                <option key={budget}>{budget}</option>
+              ))}
+            </select>
+          </Field>
+        </div>
+      </details>
       {state === 'error' && (
         <div
           className="form-message form-message--error"
@@ -227,7 +301,7 @@ export function ContactForm() {
         )}
       </button>
       <p className="form-note">
-        No pressure and no mailing list. Your details are used only to respond to this request.
+        {site.responsePromise} Your details are used only to respond to this request.
       </p>
     </form>
   )

@@ -1,5 +1,6 @@
 import { ArrowUpRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { site } from '../../content/site'
 
 export function PageCta({
   eyebrow,
@@ -23,6 +24,7 @@ export function PageCta({
             Get a Free Website Review
             <ArrowUpRight size={18} />
           </Link>
+          <p className="cta-promise">{site.responsePromise}</p>
         </div>
       </div>
     </section>

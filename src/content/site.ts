@@ -40,6 +40,12 @@ export const site = {
   ],
   primaryCta: { label: 'Get a Free Website Review', to: '/contact' },
   secondaryCta: { label: 'View Demo Work', to: '/work' },
+  /**
+   * One line, reused beside every call to action. It is a commitment about
+   * process only — response time and no follow-up marketing — so it stays true
+   * without implying clients, results, or demand the business cannot evidence.
+   */
+  responsePromise: 'No pressure and no mailing list. Replies within 1 business day.',
   hero: {
     eyebrow: 'Web design for local service businesses',
     titleLines: heroTitleLines,

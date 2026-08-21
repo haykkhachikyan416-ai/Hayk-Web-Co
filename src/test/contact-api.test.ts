@@ -172,3 +172,77 @@ describe('contact API', () => {
     expect(send).not.toHaveBeenCalled()
   })
 })
+
+describe('contact API — fast-path submissions', () => {
+  /** Everything the reduced form actually guarantees, and nothing more. */
+  const fastPath = {
+    name: 'Jamie Rivera',
+    businessName: '',
+    email: '',
+    phone: '(747) 306-1007',
+    currentWebsite: '',
+    businessType: '',
+    mainGoal: '',
+    budget: '',
+    projectDescription: 'New site for my plumbing company.',
+    source: 'quick-quote-hero',
+    company: '',
+    startedAt: Date.now() - 5000,
+  }
+
+  it('accepts a phone-only lead with no optional fields at all', async () => {
+    process.env.FORMSUBMIT_TARGET = 'owner@example.com'
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ success: 'true' }))
+
+    const response = await handler(request(fastPath))
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toMatchObject({ ok: true })
+  })
+
+  it('omits _replyto entirely when there is no email to reply to', async () => {
+    // An empty _replyto makes FormSubmit reject the whole submission, so the
+    // key has to be absent rather than blank.
+    process.env.FORMSUBMIT_TARGET = 'owner@example.com'
+    const send = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ success: 'true' }))
+
+    await handler(request(fastPath))
+
+    const body = JSON.parse(String((send.mock.calls[0]![1] as RequestInit).body))
+    expect('_replyto' in body).toBe(false)
+    expect(body.phone).toBe('(747) 306-1007')
+  })
+
+  it('labels the lead with the entry point it came from', async () => {
+    process.env.FORMSUBMIT_TARGET = 'owner@example.com'
+    const send = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ success: 'true' }))
+
+    await handler(request(fastPath))
+
+    const body = JSON.parse(String((send.mock.calls[0]![1] as RequestInit).body))
+    expect(body.submittedFrom).toBe('quick-quote-hero')
+  })
+
+  it('falls back to the person when there is no business name for the subject', async () => {
+    process.env.FORMSUBMIT_TARGET = 'owner@example.com'
+    const send = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ success: 'true' }))
+
+    await handler(request(fastPath))
+
+    const body = JSON.parse(String((send.mock.calls[0]![1] as RequestInit).body))
+    expect(body._subject).toBe('Website review request — Jamie Rivera')
+    // Blank optional answers must not email a dangling "Budget:".
+    expect(body.budget).toBe('Not provided')
+    expect(body.business).toBe('Not provided')
+  })
+
+  it('still rejects a submission with no reply route at all', async () => {
+    process.env.FORMSUBMIT_TARGET = 'owner@example.com'
+    const send = vi.spyOn(globalThis, 'fetch')
+
+    const response = await handler(request({ ...fastPath, phone: '', email: '' }))
+
+    expect(response.status).toBe(400)
+    expect(send).not.toHaveBeenCalled()
+  })
+})

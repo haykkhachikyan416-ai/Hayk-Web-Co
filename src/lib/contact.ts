@@ -8,11 +8,24 @@ export type ContactValues = {
   mainGoal: string
   budget: string
   projectDescription: string
+  /** Which entry point produced the lead, e.g. `quick-quote-hero`. */
+  source: string
   company: string
   startedAt: number
 }
 
-export type ContactErrors = Partial<Record<keyof ContactValues, string>>
+/**
+ * `contactMethod` is not a field. Email and phone are individually optional but
+ * jointly required, so "you must give me one of these" belongs to the pair
+ * rather than to either input.
+ */
+export type ContactErrorKey = keyof ContactValues | 'contactMethod'
+export type ContactErrors = Partial<Record<ContactErrorKey, string>>
+
+export const CONTACT_SOURCES = {
+  contactPage: 'contact-page',
+  quickQuoteHero: 'quick-quote-hero',
+} as const
 
 export const emptyContactValues: ContactValues = {
   name: '',
@@ -24,23 +37,51 @@ export const emptyContactValues: ContactValues = {
   mainGoal: '',
   budget: '',
   projectDescription: '',
+  source: CONTACT_SOURCES.contactPage,
   company: '',
   startedAt: 0,
 }
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+/** Shortest useful note. Long enough to exclude "hi", short enough that a
+ *  one-line answer ("Need a site for my shop") clears it. */
+export const MIN_DESCRIPTION_LENGTH = 10
+
+const countDigits = (value: string) => value.replace(/\D/g, '').length
+
+/**
+ * The single source of truth for both the browser and `api/contact.ts`, so the
+ * server can never accept something the form rejected, or vice versa.
+ *
+ * Only three things are genuinely required: a name, one way to reply, and a
+ * sentence about the work. Business type, main goal, budget, current website,
+ * and business name are all optional — they make a reply more useful, but a
+ * visitor who will not fill them in is a lead, not a rejection.
+ */
 export function validateContact(values: ContactValues): ContactErrors {
   const errors: ContactErrors = {}
+  const email = values.email.trim()
+  const phone = values.phone.trim()
+
   if (!values.name.trim()) errors.name = 'Please enter your name.'
-  if (!values.businessName.trim()) errors.businessName = 'Please enter your business name.'
-  if (!emailPattern.test(values.email.trim())) errors.email = 'Please enter a valid email address.'
-  if (!values.businessType) errors.businessType = 'Choose the type of business.'
-  if (!values.mainGoal) errors.mainGoal = 'Choose the main goal for the website.'
-  if (!values.budget) errors.budget = 'Choose a comfortable budget range.'
-  if (values.projectDescription.trim().length < 20) {
-    errors.projectDescription = 'Tell us a little more about the project (at least 20 characters).'
+
+  if (!email && !phone) {
+    errors.contactMethod = 'Add an email address or a phone number so we can reply.'
   }
+  // Validate whatever they did give. A typo in the only reply route means the
+  // response never arrives, which is worse than asking them to fix it now.
+  if (email && !emailPattern.test(email)) {
+    errors.email = 'Please enter a valid email address.'
+  }
+  if (phone && countDigits(phone) < 7) {
+    errors.phone = 'Please enter a phone number we can reach you on.'
+  }
+
+  if (values.projectDescription.trim().length < MIN_DESCRIPTION_LENGTH) {
+    errors.projectDescription = 'Tell us briefly what you need.'
+  }
+
   if (values.currentWebsite.trim()) {
     try {
       new URL(values.currentWebsite)
@@ -48,6 +89,7 @@ export function validateContact(values: ContactValues): ContactErrors {
       errors.currentWebsite = 'Enter a complete website address, including https://.'
     }
   }
+
   return errors
 }
 
@@ -60,6 +102,18 @@ export function cleanContactValues(values: ContactValues): ContactValues {
     phone: values.phone.trim(),
     currentWebsite: values.currentWebsite.trim(),
     projectDescription: values.projectDescription.trim(),
+    source: values.source.trim(),
     company: values.company.trim(),
   }
+}
+
+/**
+ * One combined field on the hero form keeps the fast path to three inputs.
+ * An "@" is the only reliable signal of intent here: a phone number never
+ * contains one, and an address always does.
+ */
+export function splitContactMethod(value: string): { email: string; phone: string } {
+  const trimmed = value.trim()
+  if (!trimmed) return { email: '', phone: '' }
+  return trimmed.includes('@') ? { email: trimmed, phone: '' } : { email: '', phone: trimmed }
 }
