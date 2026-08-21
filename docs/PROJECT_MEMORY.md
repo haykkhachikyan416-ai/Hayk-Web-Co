@@ -199,12 +199,18 @@ Consequences worth knowing:
   at the top of the file. It ships no edge export condition and pulls Node built-ins; a
   top-level import risks failing at module load and taking down _every_ request, including
   the FormSubmit path that never touches it.
-- **Still unverified: whether any mail provider is actually configured.** Everything 500s
-  before reaching that check, so the 503 "not configured" branch was unreachable and could
-  not be observed. After deploying this fix, confirm one of `FORMSUBMIT_TARGET`,
-  `WEB3FORMS_ACCESS_KEY`, or the `RESEND_API_KEY` + `CONTACT_TO_EMAIL` pair is set in Vercel,
-  then complete one live submission. If FormSubmit is the provider, its activation link must
-  be clicked before anything is delivered.
+- **Confirmed after deploying: no mail provider is configured.** With the runtime fixed, the
+  503 branch became reachable for the first time and a live submission returned
+  `{"ok":false,"message":"Email is not configured yet."}`. Nothing was sent — that branch
+  returns before contacting any provider. So the endpoint now _runs_ correctly but still
+  delivers nowhere. Set one of `FORMSUBMIT_TARGET`, `WEB3FORMS_ACCESS_KEY`, or the
+  `RESEND_API_KEY` + `CONTACT_TO_EMAIL` pair in the Vercel dashboard, redeploy, and submit
+  once. If FormSubmit is chosen, its activation link must be clicked before anything is
+  delivered — until then it answers HTTP 200 with `{"success":"false"}`, which the handler
+  correctly reports as a 502 rather than a false success.
+- Verified live after deploy: `GET /api/contact` returns 405 with `Allow: POST` (it used to
+  hang), and a honeypot POST returns 200 without contacting any provider (it used to be a
+  500). Both were failing before the runtime fix.
 
 ## Quote-request friction pass — 2026-08-19
 
@@ -264,7 +270,10 @@ The supplied logos were reference images rather than standalone vector files. Fa
 
 ## Next recommended action
 
-Deploy the Edge-runtime fix in `api/contact.ts` — until it ships, every quote request on the
-live site still fails. Then confirm a mail provider variable is set in Vercel and complete one
-live submission end to end. Confirming the assumed domain `https://haykwebco.com` remains
-outstanding from the earlier launch checklist.
+**Set a mail provider environment variable in Vercel.** The Edge-runtime fix is deployed and
+the endpoint now runs correctly, but a live check confirmed no provider is configured, so quote
+requests still reach no inbox — visitors get the mailto fallback instead. `FORMSUBMIT_TARGET`
+is the lowest-setup option: one address, no account, then click the activation link FormSubmit
+emails on first submission. After setting it, redeploy and submit once end to end.
+Confirming the assumed domain `https://haykwebco.com` remains outstanding from the earlier
+launch checklist.
