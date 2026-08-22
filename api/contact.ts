@@ -124,6 +124,23 @@ export default async function handler(request: Request): Promise<Response> {
     { ok: false, message: 'The message service could not accept the request. Please try again.' },
     502,
   )
+  /*
+   * TEMPORARY DIAGNOSTIC — remove once delivery is confirmed.
+   *
+   * The plain 502 is identical for all three providers, which made a live
+   * failure impossible to tell apart from the outside. This echoes the
+   * provider's own reason back so the cause is visible without dashboard
+   * access. It leaks no key: only the provider's response text.
+   */
+  const providerFailed = (detail: string) =>
+    json(
+      {
+        ok: false,
+        message: 'The message service could not accept the request. Please try again.',
+        detail,
+      } as { ok: boolean; message: string; detail: string },
+      502,
+    )
   const received = json(
     { ok: true, message: 'Request received. HAYK WEB CO. will follow up soon.' },
     200,
@@ -162,11 +179,28 @@ export default async function handler(request: Request): Promise<Response> {
         message: cleaned.projectDescription,
       }),
     }).catch(() => null)
-    if (!sent?.ok) return failed
-    const payload = (await sent.json().catch(() => null)) as { success?: unknown } | null
+    if (!sent) {
+      console.error('[contact] FormSubmit fetch threw')
+      return providerFailed('fetch-threw')
+    }
+    const raw = await sent.text().catch(() => '')
+    if (!sent.ok) {
+      console.error('[contact] FormSubmit HTTP', sent.status, raw.slice(0, 400))
+      return providerFailed(`http-${sent.status}: ${raw.slice(0, 200)}`)
+    }
+    let payload: { success?: unknown; message?: unknown } | null = null
+    try {
+      payload = JSON.parse(raw) as { success?: unknown; message?: unknown }
+    } catch {
+      payload = null
+    }
     // String "false" is truthy, so compare against both real shapes.
     const accepted = payload?.success === true || payload?.success === 'true'
-    return accepted ? received : failed
+    if (!accepted) {
+      console.error('[contact] FormSubmit refused:', raw.slice(0, 400))
+      return providerFailed(String(payload?.message ?? raw.slice(0, 200)))
+    }
+    return received
   }
 
   // Web3Forms needs only an access key, so it is also a zero-setup path: no
