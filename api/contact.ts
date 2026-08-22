@@ -155,9 +155,32 @@ export default async function handler(request: Request): Promise<Response> {
   // endpoint: an unactivated form returns 200 with {"success":"false"}.
   if (formsubmitTarget) {
     const endpoint = `https://formsubmit.co/ajax/${encodeURIComponent(formsubmitTarget)}`
+    /*
+     * Referer and Origin are REQUIRED here — do not drop them.
+     *
+     * A server-to-server fetch sends neither. FormSubmit reads them to decide
+     * where the submission came from, and with both absent it assumes a page
+     * opened off the local filesystem and refuses with:
+     *
+     *   "Make sure you open this page through a web server, FormSubmit will
+     *    not work in pages browsed as HTML files."
+     *
+     * It returns that as HTTP 200 + {"success":"false"}, which is exactly the
+     * shape an unactivated form returns — so the symptom is indistinguishable
+     * from "click the activation link" and sends you chasing the wrong thing.
+     *
+     * Taken from the incoming request rather than hardcoded, so previews,
+     * the vercel.app host, and a future custom domain each send their own.
+     */
+    const origin = new URL(request.url).origin
     const sent = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Referer: `${origin}/contact`,
+        Origin: origin,
+      },
       body: JSON.stringify({
         _subject: subject,
         // Replies go to the visitor rather than to FormSubmit. A phone-only

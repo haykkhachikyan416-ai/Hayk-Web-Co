@@ -236,6 +236,35 @@ describe('contact API — fast-path submissions', () => {
     expect(body.business).toBe('Not provided')
   })
 
+  it('sends Referer and Origin, without which FormSubmit refuses the request', async () => {
+    // A server-to-server fetch sends neither header. FormSubmit then assumes
+    // the submission came from a file:// page and answers HTTP 200 with
+    // {"success":"false"} — the same shape an unactivated form returns, which
+    // makes the real cause look like a missing activation click.
+    process.env.FORMSUBMIT_TARGET = 'owner@example.com'
+    const send = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ success: 'true' }))
+
+    await handler(request(fastPath))
+
+    const headers = (send.mock.calls[0]![1] as RequestInit).headers as Record<string, string>
+    expect(headers.Origin).toBe('https://haykwebco.com')
+    expect(headers.Referer).toBe('https://haykwebco.com/contact')
+  })
+
+  it('reports the provider reason instead of a bare failure', async () => {
+    process.env.FORMSUBMIT_TARGET = 'owner@example.com'
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      jsonResponse({ success: 'false', message: 'This form needs Activation.' }),
+    )
+
+    const response = await handler(request(fastPath))
+    const body = (await response.json()) as { ok: boolean; detail?: string }
+
+    expect(response.status).toBe(502)
+    expect(body.ok).toBe(false)
+    expect(body.detail).toContain('Activation')
+  })
+
   it('still rejects a submission with no reply route at all', async () => {
     process.env.FORMSUBMIT_TARGET = 'owner@example.com'
     const send = vi.spyOn(globalThis, 'fetch')
