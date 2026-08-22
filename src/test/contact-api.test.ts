@@ -251,18 +251,24 @@ describe('contact API — fast-path submissions', () => {
     expect(headers.Referer).toBe('https://haykwebco.com/contact')
   })
 
-  it('reports the provider reason instead of a bare failure', async () => {
+  it('logs the provider reason for operators without leaking it to the browser', async () => {
     process.env.FORMSUBMIT_TARGET = 'owner@example.com'
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       jsonResponse({ success: 'false', message: 'This form needs Activation.' }),
     )
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     const response = await handler(request(fastPath))
-    const body = (await response.json()) as { ok: boolean; detail?: string }
+    const body = (await response.json()) as { ok: boolean; message: string; detail?: string }
 
     expect(response.status).toBe(502)
-    expect(body.ok).toBe(false)
-    expect(body.detail).toContain('Activation')
+    expect(logged).toHaveBeenCalledWith(
+      '[contact] provider refused:',
+      'This form needs Activation.',
+    )
+    // The visitor gets copy written for them, not the provider's internals.
+    expect(body.detail).toBeUndefined()
+    expect(body.message).not.toContain('Activation')
   })
 
   it('still rejects a submission with no reply route at all', async () => {

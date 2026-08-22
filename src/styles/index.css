@@ -2910,3 +2910,117 @@ h2 {
     transform: rotate(27deg) !important;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Launched client work
+   Shares the browser-chrome device used by the concepts so the page reads as
+   one system; the pill, the real screenshot, and the outbound link are what
+   separate live work from a concept.
+
+   Both homes for these cards (the /work route and the homepage board) sit on
+   the near-black background, so the on-dark tones are the DEFAULT here rather
+   than an override scoped to one of them. Scoping them to the homepage is
+   exactly the bug this replaces: /work then fell back to --steel, which is
+   tuned for the light background and measures 3.25:1 on this one.
+   -------------------------------------------------------------------------- */
+.work-page__lead {
+  max-width: 60ch;
+  margin-bottom: clamp(2.5rem, 5vw, 4rem);
+}
+.work-page__lead h2 {
+  margin: 0 0 0.6rem;
+}
+.work-page__lead p {
+  margin: 0;
+  color: #b8bec9;
+}
+.work-page--concepts {
+  border-top: 1px solid var(--line-dark);
+}
+
+/* green, not the brand blue: "live" is a status, and the concepts' pill is
+   already blue — two blues would undo the distinction the label exists for */
+.pill--live {
+  color: #0f6b3f;
+  background: #dff3e7;
+}
+
+.project-list {
+  display: grid;
+  gap: clamp(3rem, 6vw, 5rem);
+}
+@media (min-width: 900px) {
+  .project-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.project-list--home {
+  margin-bottom: clamp(4rem, 8vw, 7rem);
+}
+
+.project-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  color: #b8bec9;
+  font-size: 0.8rem;
+}
+.project-card__frame {
+  display: block;
+  border: 1px solid var(--line-dark);
+  box-shadow: 18px 18px 0 rgba(49, 92, 255, 0.22);
+  background: white;
+}
+.project-card__frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* the shot is a hero band; a fixed ratio means a re-capture at a different
+     height cannot reflow the grid */
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: top;
+}
+.project-card__copy {
+  margin-top: 1.6rem;
+}
+.project-card__copy h3 {
+  margin: 0;
+}
+.project-card__copy h3 a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--paper);
+  text-decoration: none;
+}
+.project-card__copy h3 a:hover {
+  color: var(--signal-soft);
+}
+.project-card__copy > p {
+  color: #b8bec9;
+}
+/* has to out-specify `.project-card__copy > p` above, which also matches the
+   tagline and would otherwise flatten it to the body colour */
+.project-card__copy > p.project-card__tagline {
+  margin: 0.3rem 0 0.8rem;
+  color: var(--signal-soft);
+  font-family: var(--display);
+  font-size: 1rem;
+  font-weight: 600;
+}
+.project-card__copy ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.1rem 0;
+  padding: 0;
+  list-style: none;
+}
+.project-card__copy li {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--line-dark);
+  color: #b8bec9;
+  font-size: 0.78rem;
+}

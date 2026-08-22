@@ -125,22 +125,17 @@ export default async function handler(request: Request): Promise<Response> {
     502,
   )
   /*
-   * TEMPORARY DIAGNOSTIC — remove once delivery is confirmed.
-   *
-   * The plain 502 is identical for all three providers, which made a live
-   * failure impossible to tell apart from the outside. This echoes the
-   * provider's own reason back so the cause is visible without dashboard
-   * access. It leaks no key: only the provider's response text.
+   * The plain 502 is identical for all three providers, which once made a live
+   * failure impossible to tell apart from the outside — an unactivated form, a
+   * rejected key, and a missing Referer all looked the same. The provider's own
+   * reason now goes to the function logs via console.error at each call site.
+   * It is deliberately NOT returned to the browser: it is operator
+   * information, and the visitor already gets a message written for them.
    */
-  const providerFailed = (detail: string) =>
-    json(
-      {
-        ok: false,
-        message: 'The message service could not accept the request. Please try again.',
-        detail,
-      } as { ok: boolean; message: string; detail: string },
-      502,
-    )
+  const providerFailed = (reason: string) => {
+    console.error('[contact] provider refused:', reason)
+    return failed
+  }
   const received = json(
     { ok: true, message: 'Request received. HAYK WEB CO. will follow up soon.' },
     200,
@@ -203,13 +198,11 @@ export default async function handler(request: Request): Promise<Response> {
       }),
     }).catch(() => null)
     if (!sent) {
-      console.error('[contact] FormSubmit fetch threw')
-      return providerFailed('fetch-threw')
+      return providerFailed('FormSubmit fetch threw')
     }
     const raw = await sent.text().catch(() => '')
     if (!sent.ok) {
-      console.error('[contact] FormSubmit HTTP', sent.status, raw.slice(0, 400))
-      return providerFailed(`http-${sent.status}: ${raw.slice(0, 200)}`)
+      return providerFailed(`FormSubmit HTTP ${sent.status}: ${raw.slice(0, 300)}`)
     }
     let payload: { success?: unknown; message?: unknown } | null = null
     try {
@@ -220,8 +213,7 @@ export default async function handler(request: Request): Promise<Response> {
     // String "false" is truthy, so compare against both real shapes.
     const accepted = payload?.success === true || payload?.success === 'true'
     if (!accepted) {
-      console.error('[contact] FormSubmit refused:', raw.slice(0, 400))
-      return providerFailed(String(payload?.message ?? raw.slice(0, 200)))
+      return providerFailed(String(payload?.message ?? raw.slice(0, 300)))
     }
     return received
   }

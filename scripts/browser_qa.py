@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from playwright.sync_api import ConsoleMessage, Page, sync_playwright
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 
 BASE_URL = "http://127.0.0.1:5173"
@@ -14,6 +15,38 @@ OUTPUT_DIR = Path("test-results/qa")
 
 def route_name(route: str) -> str:
     return "home" if route == "/" else route.strip("/").replace("/", "-")
+
+
+def settle_images(page: Page) -> None:
+    """Force every image to resolve, then wait, so "broken" means broken.
+
+    Two things defeat the naive check. `loading="lazy"` images report
+    `complete === false` until they approach the viewport, and the reveal scroll
+    passes them far too quickly to trigger a fetch — then it returns to the top,
+    which puts them out of range again, so they never load at all and a plain
+    wait would hang forever.
+
+    Promoting the unfinished ones to eager asks the real question a broken-image
+    audit is for: if this src were requested, would it decode? Viewport position
+    stops mattering. Anything that then finishes with zero pixels is genuinely
+    broken; anything still pending is a slow network, not a bad file.
+    """
+    page.evaluate(
+        """() => {
+          for (const image of document.images) {
+            if (!image.complete) image.loading = 'eager'
+          }
+        }"""
+    )
+    try:
+        page.wait_for_function(
+            "() => [...document.images].every((image) => image.complete)",
+            timeout=15000,
+        )
+    except PlaywrightTimeoutError:
+        # Not a failure by itself — the metrics below still report anything that
+        # resolved to zero pixels, and pendingImages records what never settled.
+        pass
 
 
 def activate_scroll_reveals(page: Page) -> None:
@@ -46,7 +79,8 @@ def check_page(page: Page, route: str, width: int, height: int, failures: list[s
           title: document.title,
           description: document.querySelector('meta[name="description"]')?.getAttribute('content'),
           canonical: document.querySelector('link[rel="canonical"]')?.getAttribute('href'),
-          brokenImages: [...document.images].filter((image) => !image.complete || image.naturalWidth === 0).length,
+          brokenImages: [...document.images].filter((image) => image.complete && image.naturalWidth === 0).length,
+          pendingImages: [...document.images].filter((image) => !image.complete).length,
         })"""
     )
     if metrics["documentWidth"] > metrics["viewport"] + 1 or metrics["bodyWidth"] > metrics["viewport"] + 1:
@@ -148,6 +182,7 @@ def check_page(page: Page, route: str, width: int, height: int, failures: list[s
 
     if route == "/" or width in (375, 1440):
         activate_scroll_reveals(page)
+        settle_images(page)
         page.screenshot(
             path=str(OUTPUT_DIR / f"{route_name(route)}-{width}x{height}.png"),
             full_page=True,

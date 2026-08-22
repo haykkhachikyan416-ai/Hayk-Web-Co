@@ -258,6 +258,83 @@ backgrounds reached only 3.3:1. Both now measure ≥ 4.5:1; the worst new value 
 - Not verified: live end-to-end delivery, which needs the runtime fix deployed and the
   provider variables confirmed. See the section above.
 
+## Contact delivery is live — 2026-08-20
+
+Confirmed working end to end against the deployment. Getting there took three
+independent fixes, and the second one is the trap worth remembering.
+
+1. **Edge runtime** (above) — the function crashed on every request.
+2. **A provider variable** — with the runtime fixed, the 503 branch became
+   reachable and reported that no mail provider was configured. `FORMSUBMIT_TARGET`
+   was then set in Vercel.
+3. **Referer and Origin headers** — still refused. With the provider's own reason
+   surfaced, FormSubmit was answering:
+
+   > "Make sure you open this page through a web server, FormSubmit will not work
+   > in pages browsed as HTML files."
+
+   A server-to-server fetch sends neither header, so FormSubmit concluded the
+   submission came from a page opened off the local filesystem. **It returns that
+   refusal as HTTP 200 with `{"success":"false"}` — byte-identical in shape to an
+   unactivated form.** So the symptom pointed at the activation link, which had
+   already been clicked, and clicking it again changed nothing. Only after both
+   headers were added did FormSubmit register the form and send a real activation
+   email. Both are taken from the incoming request, so previews and a future custom
+   domain each present their own origin.
+
+The provider's reason is no longer returned to the browser — it is operator
+information and goes to the function logs via `console.error`. A live submission
+now returns 200 and the notification arrives.
+
+Debugging note: a plain 502 for all three providers made this nearly unfindable
+from the outside. If delivery ever breaks again, temporarily echoing the provider
+reason is what turns a guess into an answer.
+
+## Launched client work — 2026-08-20
+
+The site now shows two real, live client sites alongside the demo concepts:
+HouseGlass LA (`houseglassla.com`) and LA Glass (`laglass.org`), both Los Angeles
+glass installers.
+
+- `site.projects` is a separate array and a separate `Project` type from
+  `concepts`/`Concept`, and `ProjectShowcase` is a separate component from
+  `ConceptBrowser`. That separation is deliberate: the two carry opposite claims,
+  and a shared type or component would make it easy for a future edit to put a
+  `Demo Concept` pill on real work or drop it from a concept.
+- Real screenshots live in `public/work/*.webp`, captured at 1440x900 @2x and
+  cropped to a 16:10 band. Re-capture if either client redesigns.
+- Every statement about these projects is checkable against the live site — name,
+  business, what the site contains. No metrics, outcomes, rankings, or
+  testimonials: none can be evidenced, and the concepts' credibility depends on
+  the real work staying equally plain. `src/test/app.test.tsx` enforces this with
+  a regex guard over the rendered page (percentages, ROI, "increased sales/leads",
+  "#1"), verified to catch real claims and to not false-positive on ordinary copy.
+- Both cards open the live site in a new tab from the screenshot and the name.
+- The cards live on two dark backgrounds (`/work` and the homepage board), so the
+  on-dark text tones are the component's default rather than an override scoped to
+  one page. Scoping them to the homepage was the bug this replaced: `/work` fell
+  back to `--steel` and measured 3.25:1. Worst value is now 8.16:1.
+
+`scripts/browser_qa.py` counted `!image.complete || naturalWidth === 0` as broken,
+which conflates "has not started loading" with "failed". Lazy images below the
+fold are never complete, the reveal scroll passes them too fast to trigger a fetch,
+and returning to the top puts them out of range — so they never load and the sweep
+failed on good artwork. `settle_images` now promotes unfinished images to eager
+before waiting, and the metric flags only images that finished with zero pixels.
+Confirmed the corrected check still detects a genuinely missing file.
+
+### Verification
+
+- Prettier, ESLint, strict TypeScript: exit 0. `npm audit`: 0 vulnerabilities.
+- Vitest: 13 files, 69 tests passed.
+- Production build: exit 0.
+- Browser QA against installed Chrome: all seven routes at five viewports; zero
+  failures, zero console messages.
+- Work cards checked at 1440x900 and 390x844: two `Live site` pills, three
+  `Demo Concept` pills, both screenshots decoded, both outbound links
+  `target="_blank"` with `rel="noopener"`, no horizontal overflow.
+- Live contact submission returned 200 and the email was received.
+
 ## Contact and deployment
 
 The endpoint sends through Resend when these production variables are configured: `RESEND_API_KEY` and `CONTACT_TO_EMAIL`; `CONTACT_FROM_EMAIL` is optional. No secrets or submissions are stored in the repository. Local Vite shows a friendly explanation because it does not emulate the production function runtime.
@@ -270,10 +347,7 @@ The supplied logos were reference images rather than standalone vector files. Fa
 
 ## Next recommended action
 
-**Set a mail provider environment variable in Vercel.** The Edge-runtime fix is deployed and
-the endpoint now runs correctly, but a live check confirmed no provider is configured, so quote
-requests still reach no inbox — visitors get the mailto fallback instead. `FORMSUBMIT_TARGET`
-is the lowest-setup option: one address, no account, then click the activation link FormSubmit
-emails on first submission. After setting it, redeploy and submit once end to end.
-Confirming the assumed domain `https://haykwebco.com` remains outstanding from the earlier
-launch checklist.
+Contact delivery is confirmed working, so the launch checklist is down to the
+assumed domain `https://haykwebco.com`: confirm it, then update `site.siteUrl`,
+`public/robots.txt`, and `public/sitemap.xml` together. Re-capture the screenshots
+in `public/work` if either client site is redesigned.

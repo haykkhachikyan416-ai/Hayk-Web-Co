@@ -5,6 +5,25 @@ export type Service = {
   icon: string
 }
 
+/**
+ * A real, launched client site. Kept as a separate type from `Concept` on
+ * purpose: concepts are speculative and must stay labelled as such, and a
+ * shared type would make it easy to drift one into the other.
+ */
+export type Project = {
+  name: string
+  category: string
+  /** Live URL, opened in a new tab. */
+  url: string
+  /** Shown in the browser chrome — no scheme, no trailing slash. */
+  domain: string
+  tagline: string
+  description: string
+  /** Screenshot in public/work. Re-capture if the client redesigns. */
+  image: string
+  features: string[]
+}
+
 export type Concept = {
   name: string
   category: string
@@ -132,6 +151,36 @@ export const site = {
       icon: 'Route',
     },
   ] satisfies Service[],
+  /*
+   * Real launched work. Every line here is checkable against the live site —
+   * name, what the business does, what the site contains. No metrics, no
+   * outcomes, no testimonials: none of that can be evidenced yet, and the
+   * concepts below are only credible because this section stays honest.
+   */
+  projects: [
+    {
+      name: 'HouseGlass LA',
+      category: 'Glass installation / Los Angeles',
+      url: 'https://www.houseglassla.com',
+      domain: 'houseglassla.com',
+      tagline: 'Glass you look through, not at.',
+      description:
+        'A full marketing site for a Los Angeles glass installer working in frameless showers, stair railings, and mirrors. Built around a gallery of finished installations and a quote form that accepts photos of the space.',
+      image: '/work/houseglassla.webp',
+      features: ['Finished-work gallery', 'Quote form with photo upload', 'Reviews and FAQ'],
+    },
+    {
+      name: 'LA Glass',
+      category: 'Glass installation / Los Angeles',
+      url: 'https://laglass.org',
+      domain: 'laglass.org',
+      tagline: 'Custom glass, installed with precision.',
+      description:
+        'A site for a custom glass installer covering shower enclosures, shower doors, and railings across the Los Angeles area, structured so visitors reach completed work and a quote request without hunting for either.',
+      image: '/work/laglass.webp',
+      features: ['Completed work gallery', 'Free quote request', 'Service breakdown'],
+    },
+  ] satisfies Project[],
   concepts: [
     {
       name: 'Northline Build Co.',
