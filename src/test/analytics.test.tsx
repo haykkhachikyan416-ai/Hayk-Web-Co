@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import App from '../App'
+import { site } from '../content/site'
 
 const renderHome = () =>
   render(
@@ -15,9 +16,7 @@ describe('web analytics', () => {
     renderHome()
 
     expect(
-      await screen.findByRole('heading', {
-        name: /websites that turn local attention into real customers/i,
-      }),
+      await screen.findByRole('heading', { level: 1, name: site.hero.title }),
     ).toBeInTheDocument()
   })
 

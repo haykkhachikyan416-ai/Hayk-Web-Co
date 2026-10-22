@@ -185,7 +185,7 @@ describe('contact API — fast-path submissions', () => {
     mainGoal: '',
     budget: '',
     projectDescription: 'New site for my plumbing company.',
-    source: 'quick-quote-hero',
+    source: 'quick-quote-home',
     company: '',
     startedAt: Date.now() - 5000,
   }
@@ -220,7 +220,7 @@ describe('contact API — fast-path submissions', () => {
     await handler(request(fastPath))
 
     const body = JSON.parse(String((send.mock.calls[0]![1] as RequestInit).body))
-    expect(body.submittedFrom).toBe('quick-quote-hero')
+    expect(body.submittedFrom).toBe('quick-quote-home')
   })
 
   it('falls back to the person when there is no business name for the subject', async () => {

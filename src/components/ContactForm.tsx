@@ -21,6 +21,8 @@ const goals = [
   'Improve local search visibility',
   'Replace an outdated website',
   'Launch a new business website',
+  'Add an AI assistant to my website',
+  'Automate lead follow-up or booking',
 ]
 const budgets = ['Under $3,000', '$3,000–$6,000', '$6,000–$10,000', '$10,000+', 'Not sure yet']
 

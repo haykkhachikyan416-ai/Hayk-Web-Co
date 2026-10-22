@@ -9,7 +9,7 @@ export function Footer() {
       <div className="shell site-footer__grid">
         <div>
           <Logo inverted />
-          <p>Clear websites for businesses people rely on.</p>
+          <p>Websites and AI automation for businesses people rely on.</p>
         </div>
         <div>
           <p className="footer-label">Explore</p>
@@ -40,6 +40,9 @@ export function Footer() {
         </p>
         <Link to="/privacy">Privacy</Link>
       </div>
+      <p className="site-footer__mark" aria-hidden="true">
+        {site.name}
+      </p>
     </footer>
   )
 }

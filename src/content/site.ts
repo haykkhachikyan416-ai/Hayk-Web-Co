@@ -1,4 +1,8 @@
+export type ServiceGroup = 'web' | 'ai'
+
 export type Service = {
+  /** Which of the two offers this belongs to. Drives the grouping on /services. */
+  group: ServiceGroup
   title: string
   summary: string
   benefit: string
@@ -24,6 +28,8 @@ export type Project = {
   features: string[]
 }
 
+export type ChatMessage = { from: 'visitor' | 'ai'; text: string }
+
 export type Concept = {
   name: string
   category: string
@@ -33,7 +39,7 @@ export type Concept = {
   features: string[]
 }
 
-const heroTitleLines = ['Websites that turn', 'local attention', 'into real customers.'] as const
+const heroTitleLines = ['Websites that sell.', 'AI that works.'] as const
 
 export const site = {
   name: 'HAYK WEB CO.',
@@ -57,8 +63,8 @@ export const site = {
     { label: 'About', to: '/about' },
     { label: 'Contact', to: '/contact' },
   ],
-  primaryCta: { label: 'Get a Free Website Review', to: '/contact' },
-  secondaryCta: { label: 'View Demo Work', to: '/work' },
+  primaryCta: { label: 'Get a free review', to: '/contact' },
+  secondaryCta: { label: 'See live work', to: '#work' },
   /**
    * One line, reused beside every call to action. It is a commitment about
    * process only — response time and no follow-up marketing — so it stays true
@@ -66,30 +72,86 @@ export const site = {
    */
   responsePromise: 'No pressure and no mailing list. Replies within 1 business day.',
   hero: {
-    eyebrow: 'Web design for local service businesses',
+    eyebrow: 'Websites + AI automation / Los Angeles',
     titleLines: heroTitleLines,
     title: heroTitleLines.join(' '),
-    body: 'HAYK WEB CO. designs fast, polished, mobile-first websites that help local businesses earn trust, generate calls, and turn visitors into customers.',
+    body: 'HAYK WEB CO. builds fast, custom websites that turn visitors into calls — and AI that answers leads, books jobs, and handles the busywork while you’re on the job.',
   },
-  painPoints: [
+  /** The scrolling band under the hero. Decorative, so it can stay terse. */
+  marquee: [
+    'Custom websites',
+    'AI assistants',
+    'Instant lead follow-up',
+    'Local SEO',
+    'Booking automation',
+    'Redesigns',
+    'Workflow automation',
+  ],
+  pillars: {
+    web: {
+      title: 'Custom websites',
+      body: 'Designed from scratch around your business — not a template with your logo on it. Fast on every phone, easy to find on Google, and built so the next step is always obvious.',
+      points: [
+        'Custom design, no templates',
+        'Mobile-first and fast',
+        'Local SEO foundations',
+        'Quote, call, and booking paths',
+      ],
+    },
+    ai: {
+      title: 'AI automation',
+      body: 'AI that works the parts of your business that never stop: answering questions, replying to every lead in seconds, booking appointments, and moving information where it needs to go.',
+      points: [
+        'AI website assistant',
+        'Instant lead follow-up',
+        'Booking and reminders',
+        'Connect the tools you already use',
+      ],
+    },
+  },
+  /**
+   * The AI assistant conversation shown in the hero and the AI pillar. It is
+   * for a fictional business, and every surface that plays it is labelled
+   * `Demo Concept`.
+   */
+  demoChat: [
+    { from: 'visitor', text: 'Hi — can someone look at a kitchen remodel this week?' },
     {
-      label: 'Trust breaks quickly',
-      title: 'An outdated site makes a strong business feel uncertain.',
-      body: 'Customers judge clarity, polish, and credibility before they ever call. Your website should make the decision easier.',
+      from: 'ai',
+      text: 'Happy to help! I can book a free in-home estimate. Does Thursday 10 AM or Friday 2 PM work better?',
+    },
+    { from: 'visitor', text: 'Friday works.' },
+    { from: 'ai', text: 'You’re booked for Friday at 2 PM. A confirmation text is on its way.' },
+  ] satisfies ChatMessage[],
+  /**
+   * The steps of the pinned "Demo Concept" automation walkthrough on the
+   * homepage. Illustrative only — every surface that shows them is labelled.
+   */
+  automationFlow: [
+    {
+      time: '9:42 PM',
+      title: 'A lead comes in after hours',
+      body: 'Someone asks about an estimate through your website while you’re off the clock.',
     },
     {
-      label: 'Most visits are mobile',
-      title: 'Small screens cannot be an afterthought.',
-      body: 'Fast pages, tap-friendly actions, and clear information help mobile visitors move from searching to contacting you.',
+      time: '9:42 PM',
+      title: 'AI replies right away',
+      body: 'It answers from information you approved, then asks for the details you need to quote.',
     },
     {
-      label: 'Attention needs direction',
-      title: 'A good-looking page still needs a clear next step.',
-      body: 'Every page should guide visitors toward the call, quote, booking, or visit that matters to your business.',
+      time: '9:44 PM',
+      title: 'The appointment gets booked',
+      body: 'It offers open times from your calendar and confirms one — no phone tag.',
+    },
+    {
+      time: '9:44 PM',
+      title: 'You get the summary',
+      body: 'Name, number, job details, and the booked time land on your phone, ready for the morning.',
     },
   ],
   services: [
     {
+      group: 'web',
       title: 'Custom business websites',
       summary: 'A tailored website built around your services, customers, and goals.',
       benefit:
@@ -97,58 +159,76 @@ export const site = {
       icon: 'PanelsTopLeft',
     },
     {
+      group: 'web',
       title: 'Website redesigns',
       summary: 'A focused rebuild for sites that feel dated, confusing, or difficult to manage.',
       benefit: 'Keep what works while improving trust, clarity, speed, and mobile usability.',
       icon: 'RefreshCw',
     },
     {
+      group: 'web',
       title: 'Landing pages',
       summary: 'Campaign pages built around one audience, one offer, and one next step.',
       benefit: 'Give ads, promotions, and seasonal offers a clearer path to conversion.',
       icon: 'MousePointerClick',
     },
     {
-      title: 'Mobile optimization',
-      summary: 'Responsive layouts tuned for real phones, thumbs, and on-the-go customers.',
-      benefit: 'Reduce friction for the visitors most likely to call, book, or request a quote.',
-      icon: 'Smartphone',
-    },
-    {
+      group: 'web',
       title: 'Local SEO foundations',
       summary: 'Clean page structure, metadata, service-area signals, and search-friendly content.',
       benefit: 'Give search engines a clearer understanding of what you do and where you work.',
       icon: 'MapPin',
     },
     {
-      title: 'Booking integrations',
-      summary: 'Connect the scheduling tools your team already uses.',
-      benefit: 'Let customers choose an available time without waiting for a callback.',
+      group: 'web',
+      title: 'Quote and booking forms',
+      summary: 'Forms and scheduling that gather what you need for a useful follow-up.',
+      benefit: 'Spend less time chasing details and respond to better-qualified inquiries.',
       icon: 'CalendarCheck',
     },
     {
-      title: 'Quote and contact forms',
-      summary: 'Purpose-built forms that gather the information needed for a useful follow-up.',
-      benefit: 'Spend less time chasing details and respond to better-qualified inquiries.',
-      icon: 'FileText',
-    },
-    {
-      title: 'Website maintenance',
+      group: 'web',
+      title: 'Website care',
       summary: 'Ongoing updates, content changes, monitoring, and technical care.',
       benefit: 'Keep your site current without adding another task to your week.',
       icon: 'Wrench',
     },
     {
-      title: 'Optional automation',
-      summary: 'Practical workflows for routine follow-ups and internal handoffs.',
-      benefit: 'Reduce repetitive admin work while keeping customer communication personal.',
+      group: 'ai',
+      title: 'AI website assistant',
+      summary:
+        'A chat assistant on your site that answers common questions from information you approve.',
+      benefit: 'Visitors get answers at 10 PM, and you get their details instead of a lost lead.',
+      icon: 'Bot',
+    },
+    {
+      group: 'ai',
+      title: 'Instant lead follow-up',
+      summary: 'Every new inquiry gets a personal-sounding reply by email or text within moments.',
+      benefit: 'Reach people while they are still interested, even when you are on a job.',
+      icon: 'Zap',
+    },
+    {
+      group: 'ai',
+      title: 'Booking and reminders',
+      summary: 'Automated scheduling, confirmations, and reminders connected to your calendar.',
+      benefit: 'Fewer back-and-forth messages and fewer forgotten appointments.',
+      icon: 'CalendarClock',
+    },
+    {
+      group: 'ai',
+      title: 'Workflow automation',
+      summary: 'Connect forms, inbox, CRM, calendar, and spreadsheets so information moves itself.',
+      benefit: 'Stop copying the same details between apps by hand.',
       icon: 'Workflow',
     },
     {
-      title: 'Lead-routing integrations',
-      summary: 'Send inquiries to the inbox, CRM, or teammate who should handle them.',
-      benefit: 'Help new opportunities reach the right person while interest is still high.',
-      icon: 'Route',
+      group: 'ai',
+      title: 'Custom AI tools',
+      summary:
+        'Small, focused AI helpers for your team — drafting quotes, summarizing calls, or answering questions from your own documents.',
+      benefit: 'Hand repetitive writing and lookup work to software, and keep the judgment calls.',
+      icon: 'Sparkles',
     },
   ] satisfies Service[],
   /*
@@ -213,88 +293,55 @@ export const site = {
   process: [
     {
       step: '01',
-      title: 'Review',
-      body: 'We look at your current site, goals, customers, and the actions that matter most.',
+      title: 'Talk',
+      body: 'A free call about your business, your customers, and what is slowing you down.',
     },
     {
       step: '02',
-      title: 'Structure',
-      body: 'We shape the message and page flow before visual details distract from the strategy.',
+      title: 'Plan',
+      body: 'A clear scope, timeline, and price before any work starts. No surprises.',
     },
     {
       step: '03',
       title: 'Build',
-      body: 'We design and develop a responsive site with clear feedback at practical checkpoints.',
+      body: 'Design, development, and automation, with check-ins at real milestones.',
     },
     {
       step: '04',
       title: 'Launch',
-      body: 'We test the details, connect the essentials, and prepare the site for a confident handoff.',
-    },
-  ],
-  scopes: [
-    {
-      name: 'Focused Launch',
-      bestFor: 'A clear, professional presence for a focused offer.',
-      includes: [
-        'One conversion-focused page',
-        'Mobile-first build',
-        'Contact or booking connection',
-        'SEO essentials',
-      ],
-    },
-    {
-      name: 'Business Website',
-      bestFor: 'An established local business with multiple services.',
-      includes: [
-        'Strategic multi-page structure',
-        'Custom visual system',
-        'Service and area pages',
-        'Lead-generation setup',
-      ],
-      featured: true,
-    },
-    {
-      name: 'Growth Build',
-      bestFor: 'A business ready for deeper content and integrations.',
-      includes: [
-        'Expanded page system',
-        'Advanced forms or booking',
-        'Automation planning',
-        'Ongoing optimization options',
-      ],
+      body: 'Tested on real phones, connected to your tools, and handed over ready to use.',
     },
   ],
   faqs: [
     {
       question: 'How much does a website cost?',
       answer:
-        'Scope depends on the number of pages, content needs, integrations, and how much strategy is required. A free website review is the fastest way to identify the right-sized approach without paying for features you do not need.',
+        'It depends on the number of pages, content, and integrations. A free review is the fastest way to find the right-sized scope, and you get a fixed price before any work starts.',
+    },
+    {
+      question: 'What can AI actually do for my business?',
+      answer:
+        'The most useful jobs are the repetitive ones: answering the same customer questions, replying to new leads right away, booking appointments, sending reminders, and moving details between your apps. The review is where we find which of those would save you the most time.',
+    },
+    {
+      question: 'Will an AI assistant say something wrong to my customers?',
+      answer:
+        'It is set up to answer only from information you approve — your services, areas, hours, and policies. When a question falls outside that, it collects the customer’s details and hands the conversation to you instead of guessing.',
     },
     {
       question: 'How long does a project take?',
       answer:
-        'A focused landing page can move quickly, while a custom multi-page site needs more time for content, design, feedback, and testing. You will receive a clear project schedule before work begins.',
+        'A focused landing page or a single automation can move quickly, while a custom multi-page site needs more time for content, design, and testing. You get a clear schedule before work begins.',
     },
     {
       question: 'Can you improve my current website?',
       answer:
-        'Yes. A redesign can preserve useful content and brand assets while improving clarity, mobile usability, speed, search foundations, and the path to contact.',
-    },
-    {
-      question: 'Will my website work well on phones?',
-      answer:
-        'Yes. Layout, navigation, forms, buttons, and page speed are planned mobile-first and tested across several real viewport sizes.',
+        'Yes. A redesign can keep your useful content and brand while improving clarity, mobile usability, speed, search foundations, and the path to contact.',
     },
     {
       question: 'Do you guarantee first-page Google rankings?',
       answer:
-        'No credible provider can guarantee a search position. HAYK WEB CO. builds strong technical and content foundations and can help you make practical improvements for local discovery.',
-    },
-    {
-      question: 'Can you connect booking or lead tools?',
-      answer:
-        'Yes. Common scheduling, form, email, CRM, and lead-routing tools can be connected when they fit the project and your existing workflow.',
+        'No credible provider can guarantee a search position. HAYK WEB CO. builds strong technical and content foundations and helps you make practical improvements for local discovery.',
     },
   ],
 }

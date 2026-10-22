@@ -21,7 +21,7 @@ export function PageCta({
         <div>
           <p>{body}</p>
           <Link className="button" to="/contact">
-            Get a Free Website Review
+            {site.primaryCta.label}
             <ArrowUpRight size={18} />
           </Link>
           <p className="cta-promise">{site.responsePromise}</p>

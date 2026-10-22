@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import App from '../App'
+import { site } from '../content/site'
 
 function renderRoute(path: string) {
   return render(
@@ -15,11 +16,7 @@ describe('site routing', () => {
   it('renders the homepage immediately without a route-loading placeholder', () => {
     renderRoute('/')
 
-    expect(
-      screen.getByRole('heading', {
-        name: /websites that turn local attention into real customers/i,
-      }),
-    ).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: site.hero.title })).toBeInTheDocument()
     expect(screen.queryByRole('status', { name: /loading page/i })).not.toBeInTheDocument()
   })
 
@@ -27,10 +24,10 @@ describe('site routing', () => {
     renderRoute('/services')
 
     expect(
-      await screen.findByRole('heading', { name: /website services built around your business/i }),
+      await screen.findByRole('heading', { name: /websites and ai automation, built around/i }),
     ).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: /primary navigation/i })).toBeInTheDocument()
-    const reviewLinks = screen.getAllByRole('link', { name: /get a free website review/i })
+    const reviewLinks = screen.getAllByRole('link', { name: site.primaryCta.label })
     expect(reviewLinks.length).toBeGreaterThanOrEqual(2)
     reviewLinks.forEach((link) => expect(link).toHaveAttribute('href', '/contact'))
   })
@@ -66,18 +63,21 @@ describe('site routing', () => {
     }
   })
 
-  it('states no outcome it cannot evidence', async () => {
-    renderRoute('/work')
-    await screen.findByRole('heading', { name: /live client sites/i })
+  it.each(['/', '/work', '/services'])(
+    'states no outcome it cannot evidence on %s',
+    async (path) => {
+      renderRoute(path)
+      await screen.findByRole('heading', { level: 1 })
 
-    // No invented metrics, rankings, revenue, or client quotes. There is no
-    // data behind any of these yet, and the concepts' honesty depends on the
-    // real work staying equally plain.
-    const body = document.body.textContent ?? ''
-    for (const claim of [/\d+\s*%/, /\bROI\b/i, /increased?\s+(sales|leads|traffic)/i, /#1\b/]) {
-      expect(body).not.toMatch(claim)
-    }
-  })
+      // No invented metrics, rankings, revenue, or client quotes. There is no
+      // data behind any of these yet, and the concepts' honesty depends on the
+      // real work staying equally plain.
+      const body = document.body.textContent ?? ''
+      for (const claim of [/\d+\s*%/, /\bROI\b/i, /increased?\s+(sales|leads|traffic)/i, /#1\b/]) {
+        expect(body).not.toMatch(claim)
+      }
+    },
+  )
 
   it('renders a useful custom 404 route', async () => {
     renderRoute('/missing-page')

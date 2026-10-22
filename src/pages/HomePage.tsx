@@ -1,13 +1,11 @@
 import { Seo } from '../components/Seo'
+import { AutomationSection } from '../components/sections/AutomationSection'
 import { FaqSection } from '../components/sections/FaqSection'
-import { FinalCta } from '../components/sections/FinalCta'
 import { HeroSection } from '../components/sections/HeroSection'
-import { PainSection } from '../components/sections/PainSection'
-import { PerformanceSection } from '../components/sections/PerformanceSection'
+import { Marquee } from '../components/sections/Marquee'
+import { PillarsSection } from '../components/sections/PillarsSection'
 import { ProcessSection } from '../components/sections/ProcessSection'
-import { ScopeSection } from '../components/sections/ScopeSection'
-import { ServicesSection } from '../components/sections/ServicesSection'
-import { WhySection } from '../components/sections/WhySection'
+import { StartSection } from '../components/sections/StartSection'
 import { WorkSection } from '../components/sections/WorkSection'
 import { site } from '../content/site'
 
@@ -22,26 +20,24 @@ export default function HomePage() {
     ...(site.phone ? { telephone: site.phoneHref.replace('tel:', '') } : {}),
     areaServed: site.serviceAreas.filter((area) => area !== 'Remote'),
     description: site.hero.body,
-    serviceType: 'Website design and development',
+    serviceType: ['Website design and development', 'AI automation for small businesses'],
   }
 
   return (
     <>
       <Seo
-        description="HAYK WEB CO. creates fast, polished, mobile-first websites that help local businesses earn trust and generate inquiries."
+        description="HAYK WEB CO. builds fast, custom websites and practical AI automation — lead follow-up, booking, and AI assistants — for local businesses in Los Angeles."
         path="/"
         structuredData={structuredData}
       />
       <HeroSection />
-      <PainSection />
-      <ServicesSection />
-      <WhySection />
+      <Marquee />
+      <PillarsSection />
+      <AutomationSection />
       <WorkSection />
       <ProcessSection />
-      <PerformanceSection />
-      <ScopeSection />
       <FaqSection />
-      <FinalCta />
+      <StartSection />
     </>
   )
 }

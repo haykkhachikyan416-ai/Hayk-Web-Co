@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import App from '../App'
+import { site } from '../content/site'
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -22,9 +23,7 @@ describe('route scroll restoration', () => {
     )
 
     expect(
-      await screen.findByRole('heading', {
-        name: /websites that turn local attention into real customers/i,
-      }),
+      await screen.findByRole('heading', { level: 1, name: site.hero.title }),
     ).toBeInTheDocument()
     expect(window.scrollTo).toHaveBeenCalled()
 

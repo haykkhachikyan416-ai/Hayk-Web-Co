@@ -1,5 +1,6 @@
 import '@fontsource-variable/manrope'
-import '@fontsource-variable/space-grotesk'
+import '@fontsource-variable/archivo/wdth.css'
+import '@fontsource-variable/jetbrains-mono'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
@@ -7,6 +8,7 @@ import App from './App'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
 import { installBootErrorHandlers, showBootError } from './lib/boot'
 import './styles/index.css'
+import './styles/home.css'
 
 installBootErrorHandlers()
 

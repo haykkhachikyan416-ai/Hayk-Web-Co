@@ -2,65 +2,112 @@
 
 ## Current state
 
-The production-ready marketing site is implemented with the Electric Editorial homepage direction. It is a responsive Vite/React application with complete interior routes, accessible contact handling, SEO assets, automated tests, deployment configuration, and browser-tested motion behavior.
+The live marketing site sells two offers: custom websites and AI automation. The homepage
+uses the "Live Signal" direction (2026-10-21). It is a responsive Vite/React app with interior
+routes, working FormSubmit contact delivery, SEO assets, automated tests, and browser-tested
+motion. Deployed on Vercel at `https://hayk-web-co.vercel.app`; a push to `main` on GitHub
+(`haykkhachikyan416-ai/Hayk-Web-Co`) redeploys it.
 
 ## Brand and design decisions
 
 - Exact name: `HAYK WEB CO.`
 - Approved palette: electric blue `#315CFF`, near black `#0B0D12`, warm white `#F7F7F4`.
-- Direction: Electric Editorial - sharp asymmetric layouts, quiet technical grids, dimensional browser-interface details, and restrained motion.
-- Hero signature: an unfinished browser composition resolves into a polished local-business page while one electric-blue build beam connects the transformation to the final CTA.
-- The header uses full light/dark logos at larger widths and compact marks on mobile.
-- Work examples are labeled `Demo Concept`; no clients, results, awards, or statistics are invented.
+- Direction: Live Signal — near-black canvas with electric blue used as light; sections
+  alternate ink / blue / paper so every scroll lands on a change of surface.
+- Type: Archivo Variable (width axis, up to 125% for display), Manrope for body, JetBrains
+  Mono for labels. All self-hosted through `@fontsource-variable`.
+- Owner asked for a strong, eye-catching site with "many animations," a shorter homepage,
+  and nothing that reads as AI-generated. On phones specifically: no small text, nothing
+  confusing, understood at a glance.
+- The header logo is the approved HW/browser mark; the header stays dark in every state.
+- Speculative work is labelled `Demo Concept`. That includes every illustrative AI
+  conversation and the automation walkthrough. No clients, results, awards, or statistics
+  are invented; the only real work shown is the two launched glass-installer sites.
 
 ## Technology
 
-Vite, React, strict TypeScript, Tailwind CSS, React Router DOM, Motion, Lucide React, Vitest, Testing Library, npm, and a Vercel-compatible Web API function. Fonts are self-hosted from reputable `@fontsource-variable` packages.
+Vite, React, strict TypeScript, Tailwind CSS, React Router DOM, Motion, Lucide React,
+Vitest 5, Testing Library, npm, and a Vercel Edge function for contact. The hero and closing
+backgrounds are a raw WebGL fragment shader, with no three.js.
 
 ## Important files
 
-- `src/content/site.ts`: source of truth for business details and reusable content.
-- `src/App.tsx`: lazy-loaded routes and shared layout.
-- `src/components/BrowserWorkshop.tsx`: interactive hero transformation.
-- `src/components/ui/Reveal.tsx`: fail-open in-view polish; content never starts visually hidden.
-- `src/components/ContactForm.tsx`: accessible contact form states.
-- `api/contact.ts`: validation, spam controls, rate limit, and optional Resend delivery.
-- `src/styles/index.css`: tokens, responsive layout, focus treatment, and reduced-motion rules.
-- `scripts/browser_qa.py`: required viewport and route browser checks.
-- `vercel.json`: Vite SPA rewrite, API function support, and security headers.
-- `docs/superpowers/specs/2026-08-08-hayk-web-co-design.md`: approved design.
-- `docs/superpowers/plans/2026-08-08-hayk-web-co-site.md`: implementation plan.
-- `docs/superpowers/specs/2026-08-15-homepage-electric-editorial-design.md`: approved Electric Editorial homepage design.
-- `docs/superpowers/plans/2026-08-15-homepage-electric-editorial.md`: test-first redesign plan.
+- `src/content/site.ts`: source of truth for business details, services (grouped `web` /
+  `ai`), pillars, the demo chat script, the automation-flow steps, process, and FAQs.
+- `src/components/effects/SignalField.tsx`: WebGL dot field with a CSS fallback.
+- `src/components/sections/*`: Hero, Marquee, Pillars, Automation (pinned), Work, Process,
+  FAQ, Start (final CTA + quick quote).
+- `src/components/ChatDemo.tsx`, `src/components/BuildPreview.tsx`: animated illustrations.
+- `src/components/ui/Reveal.tsx`: CSS scroll-driven entrances (no JS gate).
+- `src/components/ui/Magnetic.tsx`: mouse-only magnetic CTA.
+- `src/styles/home.css`: everything homepage-specific, including the phone layer at the end.
+- `src/styles/index.css`: tokens, shared layout, header, interior pages, forms.
+- `api/contact.ts`: validation, spam controls, rate limit, FormSubmit / Web3Forms / Resend.
+- `scripts/browser_qa.py`: 7 routes × 5 viewports in installed Chrome, plus homepage checks.
 
 ## Implemented routes
 
-`/`, `/services`, `/work`, `/about`, `/contact`, `/privacy`, plus a custom 404 route.
+`/`, `/services` (Websites group + AI automation group, anchor `#ai-automation`), `/work`,
+`/about`, `/contact`, `/privacy`, plus a custom 404 route.
 
-## Electric Editorial homepage - 2026-08-15
+## Live Signal homepage + AI automation — 2026-10-21
 
-The homepage retains its original conversion story and business facts, but now carries a more distinctive visual system from the hero through the final CTA.
+Replaced the ten-section Electric Editorial homepage, which repeated the same
+label/headline/paragraph block in every section and read as templated. Desktop height went
+from 13,685 px to about 10,000 px (2,700 px of that is the pinned AI section's scroll
+track). Phone height went from 18,783 px to about 11,100 px. Eight sections:
+hero → marquee → pillars → AI flow → work → process → FAQ → start.
 
-- The hero headline is split into three visual rows while keeping the original accessible heading name. The final row uses electric blue as the sole headline accent.
-- The three hero rows and accessible heading are generated from the same `site.hero.titleLines` source, so content edits cannot make them diverge.
-- `BrowserWorkshop` adds a diagonal blue build beam, stronger depth, a rough-to-ready label, and mobile/reduced-motion containment.
-- Editorial status labels are real `aria-hidden` elements, and the hero is explicitly marked `Demo Concept / Local Service` so decoration never implies active client work.
-- Pain, services, why, demo work, process, performance, scopes, FAQ, and final CTA share a deliberate grid, depth, and motion vocabulary without adding dependencies or unsupported claims.
-- Reveal wrappers use `initial={false}` and light in-view keyframes. This fixes the former failure mode where off-screen sections appeared blank in full-page screenshots before IntersectionObserver activation.
-- Homepage board styling is scoped to `.work-section`; an early QA pass caught a global negative-inset outline widening the separate `/work` route by six pixels on mobile.
-- Browser QA now fails when a homepage reveal is hidden or has no layout box, the split headline is missing or clipped by the viewport, or the workshop beam is absent.
-- The 375 px headline deliberately wraps inside its visual rows; it no longer clips behind the hero's overflow boundary.
-- Fine-pointer tilt is disabled below 521 px, and reduced-motion QA verifies the fully resolved workshop, process rail, and diagonal final beam.
-- The existing mobile-menu rotation test now wraps its media-query callback in React `act`, removing the suite's prior state-update warning.
+- **Hero:** "Websites that sell. AI that works." over the WebGL signal field. Lines slide
+  out of masks; the AI line has a blinking caret. On desktop, two floating cards drift with
+  the pointer: the real HouseGlass LA site and a `Demo Concept` AI chat. Phones show only the
+  site card.
+- **Marquee:** speed and skew follow scroll velocity, and it reverses on scroll-up.
+- **Pillars:** a bento grid with Websites (a self-building wireframe) and AI automation (an
+  animated chat), plus four small cards. A cursor spotlight lights every card and its border.
+- **AI flow:** pins on wide screens (≥900 px wide, ≥620 px tall, motion allowed). Scroll
+  drives four steps: lead → AI reply → booking → summary. On phones and with reduced motion
+  it is a plain, fully lit list.
+- **Start:** a giant "Let's build yours." with the quick-quote form inside a travelling
+  conic light border. The form moved here from the hero and now tags leads
+  `quick-quote-home`.
+
+Things that bit, and must not regress:
+
+- **`overflow-x: hidden` on both `html` and `body` breaks every `position: sticky`.**
+  Body becomes a scroll container that never scrolls. Both now use `overflow-x: clip`.
+  The pinned section silently stopped pinning halfway until this was fixed, and the QA
+  script now measures the pin.
+- Reveals are CSS `animation-timeline: view()`, gated on `@supports` and
+  `prefers-reduced-motion: no-preference`. Content can never be stranded invisible.
+  Unsupported browsers, tests, and reduced motion render in place. QA scrolls each reveal
+  to the viewport centre and requires opacity ≥ 0.9.
+- Chrome moves its sequential-focus starting point with programmatic scrolling. The QA
+  therefore tests the skip link on a fresh load, not after its reveal pass.
+- The chat demo keeps every bubble in layout and only changes state, so the card never
+  resizes. Each loop opens on the visitor's question, never an empty card.
+- The signal field is capped at 1.25× pixel ratio and at 30 fps on phones and coarse
+  pointers. It pauses offscreen and in hidden tabs, and falls back to a CSS dot pattern if
+  WebGL is missing or the context is lost.
+- Text-size floor: anything a visitor reads is at least 0.72rem for mono labels and
+  pills, and 0.84rem or more for notes and errors. Only the miniature website mockups are
+  smaller, on purpose.
+- Upgrading Vitest 3 → 5 (to clear critical/moderate advisories in `tinypool` and
+  `@vitest/mocker`) removed Node types that Vitest 3 had pulled in implicitly.
+  `tsconfig.app.json` now lists `"node"` in `types` explicitly.
 
 ### Verification
 
-- Prettier wrote all files with no remaining changes.
-- ESLint and strict TypeScript exited 0.
-- Vitest: 12 files, 49 tests passed with no warnings.
-- Production build: 2,125 modules transformed; exit 0.
-- Browser QA against installed Chrome 151.0.7922.138: all seven routes at 375x812, 430x932, 768x1024, 1440x900, and 1920x1080; zero failures and zero console messages.
-- `npm audit`: 0 vulnerabilities.
+- Prettier, ESLint, strict TypeScript: exit 0. `npm audit`: 0 vulnerabilities.
+- Vitest: 13 files, 76 tests passed.
+- Production build: exit 0; main bundle 421 kB (138 kB gzip).
+- Browser QA against installed Chrome 155: 7 routes × 5 viewports, zero failures, zero
+  console messages. Covers the pin holding at four scroll depths, step progression, the
+  anchor landing under the header, phone hero visuals, and the reduced-motion end state.
+- Frame timing: steady 60 fps unthrottled at 1440 and 1920. With 4× CPU throttle the
+  median frame stays 16.7 ms.
+- Production preview: renders with WebGL live. The only console entry is the expected
+  `/_vercel/insights` 404.
 
 ## Verification — 2026-08-09
 
@@ -337,9 +384,10 @@ Confirmed the corrected check still detects a genuinely missing file.
 
 ## Contact and deployment
 
-The endpoint sends through Resend when these production variables are configured: `RESEND_API_KEY` and `CONTACT_TO_EMAIL`; `CONTACT_FROM_EMAIL` is optional. No secrets or submissions are stored in the repository. Local Vite shows a friendly explanation because it does not emulate the production function runtime.
-
-Vercel configuration is ready, but the site is not deployed because no authenticated hosting target was provided. Before launch, confirm the assumed canonical domain `https://haykwebco.com` and the assumed public email `hello@haykwebco.com` in `src/content/site.ts`.
+Deployed on Vercel at `https://hayk-web-co.vercel.app`; pushing `main` redeploys. Contact
+delivery goes through FormSubmit (`FORMSUBMIT_TARGET` set in Vercel); Web3Forms and Resend
+remain as fallbacks in `api/contact.ts`. No secrets or submissions are stored in the
+repository. Local Vite has no function runtime, so the forms show their fallback there.
 
 ## Known limitation
 

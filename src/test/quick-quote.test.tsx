@@ -38,7 +38,7 @@ describe('splitContactMethod', () => {
   })
 })
 
-describe('hero quick quote', () => {
+describe('homepage quick quote', () => {
   it('posts to the same endpoint as the full form, tagged with its source', async () => {
     const user = userEvent.setup()
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(okResponse())
@@ -56,7 +56,7 @@ describe('hero quick quote', () => {
     )
 
     const body = submittedBody(fetchSpy)
-    expect(body.source).toBe('quick-quote-hero')
+    expect(body.source).toBe('quick-quote-home')
     expect(body.name).toBe('Jamie Rivera')
     expect(body.email).toBe('jamie@example.com')
     expect(body.phone).toBe('')

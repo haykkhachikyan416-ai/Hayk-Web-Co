@@ -12,10 +12,10 @@ import type { ContactErrors } from '../lib/contact'
 import { site } from '../content/site'
 
 /**
- * The three-field version of the contact form, sitting in the hero.
+ * The three-field version of the contact form, closing the homepage.
  *
  * It posts to the same `/api/contact` endpoint as the full form and carries
- * `source: 'quick-quote-hero'`, so these leads are distinguishable in the
+ * `source: 'quick-quote-home'`, so these leads are distinguishable in the
  * notification email without needing a second handler or provider.
  *
  * Reply route is one combined "email or phone" input rather than two, which is
@@ -45,7 +45,7 @@ export function QuickQuoteForm() {
       email,
       phone,
       projectDescription: note,
-      source: CONTACT_SOURCES.quickQuoteHero,
+      source: CONTACT_SOURCES.quickQuoteHome,
       startedAt,
     })
 
@@ -95,9 +95,9 @@ export function QuickQuoteForm() {
 
   return (
     <form className="quick-quote" onSubmit={handleSubmit} noValidate aria-label="Quick quote">
-      <p className="quick-quote__title">Rather just ask?</p>
+      <p className="quick-quote__title">Tell me about your project</p>
       <p className="quick-quote__lede">
-        Three fields. No forms to wade through — tell me what you need and I&rsquo;ll reply.
+        Three fields. No sales script — just what you need, and I&rsquo;ll reply.
       </p>
 
       <div className="honeypot" aria-hidden="true">
@@ -156,7 +156,7 @@ export function QuickQuoteForm() {
             name="projectDescription"
             rows={2}
             value={note}
-            placeholder="New site for my plumbing company"
+            placeholder="A new site, or AI that answers my leads"
             onChange={(event) => setNote(event.target.value)}
             aria-invalid={Boolean(errors.projectDescription)}
             aria-describedby={errors.projectDescription ? 'quick-note-error' : undefined}

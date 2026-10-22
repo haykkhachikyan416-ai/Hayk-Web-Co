@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
+import { site } from '../content/site'
 import AboutPage from '../pages/AboutPage'
 import ServicesPage from '../pages/ServicesPage'
 import WorkPage from '../pages/WorkPage'
@@ -10,8 +11,11 @@ const renderPage = (page: React.ReactNode) => render(<MemoryRouter>{page}</Memor
 describe('interior pages', () => {
   it('connects the complete service catalog to customer benefits and a CTA', () => {
     renderPage(<ServicesPage />)
-    expect(screen.getAllByRole('article')).toHaveLength(10)
+    expect(screen.getAllByRole('article')).toHaveLength(site.services.length)
+    expect(screen.getByRole('heading', { level: 2, name: /^websites$/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: /^ai automation$/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /local SEO foundations/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /ai website assistant/i })).toBeInTheDocument()
     expect(screen.getByText(/give search engines a clearer understanding/i)).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: /ready for a website that works harder/i }),

@@ -1,20 +1,39 @@
-import { motion, useReducedMotion } from 'motion/react'
-import type { PropsWithChildren } from 'react'
+import type { CSSProperties, PropsWithChildren } from 'react'
 
-type RevealProps = PropsWithChildren<{ className?: string; delay?: number }>
+export type RevealVariant = 'rise' | 'scale' | 'wipe' | 'blur'
 
-export function Reveal({ children, className, delay = 0 }: RevealProps) {
-  const reduceMotion = useReducedMotion()
+type RevealProps = PropsWithChildren<{
+  className?: string
+  variant?: RevealVariant
+  /** Position in a row of siblings; nudges its scroll range so a row cascades. */
+  order?: number
+  as?: 'div' | 'li' | 'header'
+}>
+
+/**
+ * Scroll-linked entrance, driven entirely by CSS `animation-timeline: view()`.
+ *
+ * There is no JavaScript gate, so content can never be stranded invisible:
+ * browsers without scroll-driven animations, reduced-motion visitors, and
+ * test environments simply render it in place. Where it is supported, the
+ * animation is tied to scroll position rather than fired once, so it feels
+ * attached to the page instead of replayed on top of it.
+ */
+export function Reveal({
+  children,
+  className,
+  variant = 'rise',
+  order = 0,
+  as = 'div',
+}: RevealProps) {
+  const Tag = as
   return (
-    <motion.div
+    <Tag
       className={className}
-      data-reveal="true"
-      initial={false}
-      whileInView={reduceMotion ? undefined : { opacity: [0.88, 1], y: [12, 0] }}
-      viewport={{ once: true, amount: 0.18 }}
-      transition={{ duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] }}
+      data-reveal={variant}
+      style={order ? ({ '--reveal-order': order } as CSSProperties) : undefined}
     >
       {children}
-    </motion.div>
+    </Tag>
   )
 }

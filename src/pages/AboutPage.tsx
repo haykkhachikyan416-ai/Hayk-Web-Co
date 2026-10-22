@@ -17,6 +17,11 @@ const principles = [
     title: 'Strategy tied to a real business action.',
     body: 'The goal is not more decoration. It is a clearer path to the call, quote request, booking, visit, or conversation that moves the business forward.',
   },
+  {
+    label: 'Automation',
+    title: 'AI that takes work off your plate.',
+    body: 'Practical automation for the repetitive parts of running a business — answering common questions, following up with leads, booking, and moving details between tools — set up to answer only from information you approve.',
+  },
 ]
 
 export default function AboutPage() {
@@ -24,7 +29,7 @@ export default function AboutPage() {
     <>
       <Seo
         title="About"
-        description="Learn how HAYK WEB CO. combines clear strategy, modern design, clean development, and mobile-first thinking."
+        description="Learn how HAYK WEB CO. combines clear strategy, modern design, clean development, and practical AI automation for local businesses."
         path="/about"
       />
       <section className="page-hero">
@@ -32,8 +37,8 @@ export default function AboutPage() {
           <p className="eyebrow">About HAYK WEB CO.</p>
           <h1>Good websites start with clear thinking.</h1>
           <p>
-            Modern design, clean development, mobile-first planning, business-focused strategy, and
-            straightforward communication—working as one system.
+            Modern design, clean development, practical AI automation, business-focused strategy,
+            and straightforward communication—working as one system.
           </p>
         </div>
       </section>

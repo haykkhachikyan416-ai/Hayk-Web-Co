@@ -95,39 +95,43 @@ def check_page(page: Page, route: str, width: int, height: int, failures: list[s
         failures.append(f"Broken images: {label} ({metrics['brokenImages']})")
 
     if route == "/":
-        hidden_reveals = page.locator('[data-reveal="true"]').evaluate_all(
-            """els => els.filter(el => {
-              const style = getComputedStyle(el)
-              const box = el.getBoundingClientRect()
-              return style.opacity === '0' || style.display === 'none' ||
-                style.visibility === 'hidden' || box.width === 0 || box.height === 0
-            }).length"""
+        # Reveals are CSS scroll-driven, so "hidden before it is reached" is
+        # correct. What must never happen is content still invisible once it
+        # is actually on screen: bring each one to the middle and read it.
+        stuck_reveals = page.evaluate(
+            """async () => {
+              const stuck = []
+              for (const el of document.querySelectorAll('[data-reveal]')) {
+                el.scrollIntoView({ block: 'center', behavior: 'instant' })
+                await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+                const box = el.getBoundingClientRect()
+                const opacity = Number(getComputedStyle(el).opacity)
+                if (opacity < 0.9 || box.width === 0 || box.height === 0) {
+                  stuck.push(`${el.className || el.tagName}: opacity ${opacity}`)
+                }
+              }
+              window.scrollTo({ top: 0, behavior: 'instant' })
+              return stuck
+            }"""
         )
-        if hidden_reveals:
-            failures.append(f"Homepage reveals started hidden: {label} ({hidden_reveals})")
-        if page.locator(".home-hero__title-line").count() != 3:
+        if stuck_reveals:
+            failures.append(f"Homepage content still hidden on screen: {label} ({stuck_reveals})")
+        if page.locator(".hero__line").count() != 2:
             failures.append(f"Hero title treatment missing: {label}")
-        clipped_hero_lines = page.locator(".home-hero__title-line").evaluate_all(
+        clipped_hero_lines = page.locator(".hero__line-inner").evaluate_all(
             "els => els.filter(el => { const box = el.getBoundingClientRect(); return box.left < -1 || box.right > window.innerWidth + 1 }).length"
         )
         if clipped_hero_lines:
             failures.append(f"Hero title clipped by viewport: {label} ({clipped_hero_lines})")
-        if page.locator(".workshop-beam").count() != 1:
-            failures.append(f"Workshop beam missing: {label}")
+        field_modes = page.locator(".signal-field").evaluate_all("els => els.map(el => el.dataset.mode)")
+        if len(field_modes) != 2 or any(mode not in ("live", "fallback") for mode in field_modes):
+            failures.append(f"Signal field did not settle: {label} ({field_modes})")
 
     if width == 1440 and route == "/":
-        stage = page.locator(".workshop-stage")
-        frame = page.locator(".workshop-window")
-        box = stage.bounding_box()
-        page.wait_for_timeout(1100)
-        transform_before = frame.evaluate("el => getComputedStyle(el).transform")
-        if box:
-            page.mouse.move(box["x"] + box["width"] * 0.82, box["y"] + box["height"] * 0.24)
-            page.wait_for_timeout(250)
-            transform_after = frame.evaluate("el => getComputedStyle(el).transform")
-            if transform_after == transform_before:
-                failures.append(f"Workshop pointer tilt did not respond: {label}")
-            page.mouse.move(0, 0)
+        # Fresh load first: the reveal pass above scrolls the whole page, and
+        # Chrome moves its sequential-focus starting point with the scroll, so
+        # Tab would begin from wherever that pass ended rather than the top.
+        page.goto(f"{BASE_URL}{route}", wait_until="networkidle")
         page.keyboard.press("Tab")
         active_text = page.evaluate("document.activeElement?.textContent?.trim()")
         skip_box = page.locator(".skip-link").bounding_box()
@@ -135,13 +139,62 @@ def check_page(page: Page, route: str, width: int, height: int, failures: list[s
             failures.append(f"Skip link was not keyboard-visible: {label}")
         page.evaluate("document.activeElement?.blur()")
 
-    if width <= 430 and route == "/":
-        page.wait_for_timeout(1100)
-        mobile_workshop = page.locator(".workshop-window").evaluate(
-            "el => ({ transform: getComputedStyle(el).transform, perspective: getComputedStyle(el.parentElement).perspective })"
+        float_card = page.locator(".hero__float--site")
+        page.wait_for_timeout(1400)
+        before = float_card.evaluate("el => getComputedStyle(el).transform")
+        hero_box = page.locator(".hero").bounding_box()
+        if hero_box:
+            page.mouse.move(hero_box["x"] + hero_box["width"] * 0.9, hero_box["y"] + hero_box["height"] * 0.85)
+            page.wait_for_timeout(700)
+            after = float_card.evaluate("el => getComputedStyle(el).transform")
+            if after == before:
+                failures.append(f"Hero cards did not respond to the pointer: {label}")
+            page.mouse.move(0, 0)
+
+        # The AI flow pins while scroll drives its four steps. Sticky breaks
+        # silently (an overflow on an ancestor is enough), so measure it.
+        flow = page.evaluate(
+            """async () => {
+              const section = document.querySelector('.flow')
+              const sticky = section.querySelector('.flow__sticky')
+              const header = document.querySelector('.site-header').getBoundingClientRect().height
+              const top = section.getBoundingClientRect().top + window.scrollY
+              const travel = section.offsetHeight - window.innerHeight
+              const readings = []
+              for (const fraction of [0.05, 0.35, 0.6, 0.95]) {
+                window.scrollTo({ top: top + travel * fraction, behavior: 'instant' })
+                await new Promise((resolve) => setTimeout(resolve, 250))
+                readings.push({
+                  stickyTop: Math.round(sticky.getBoundingClientRect().top),
+                  active: section.querySelectorAll('[data-active="true"]').length,
+                })
+              }
+              window.scrollTo({ top: 0, behavior: 'instant' })
+              return { pinned: section.dataset.pinned, header: Math.round(header), readings }
+            }"""
         )
-        if mobile_workshop["transform"] != "none" or mobile_workshop["perspective"] != "none":
-            failures.append(f"Mobile workshop depth was not disabled: {label} ({mobile_workshop})")
+        if flow["pinned"] != "true":
+            failures.append(f"AI flow was not pinned on desktop: {label} ({flow})")
+        elif any(abs(r["stickyTop"] - flow["header"]) > 2 for r in flow["readings"]):
+            failures.append(f"AI flow lost its pin while scrolling: {label} ({flow})")
+        actives = [r["active"] for r in flow["readings"]]
+        if actives != sorted(actives) or actives[0] >= actives[-1] or actives[-1] != 4:
+            failures.append(f"AI flow steps did not advance with scroll: {label} ({flow})")
+
+    if width <= 430 and route == "/":
+        # Phones show the live site as the hero visual and leave the floating
+        # chat for desktop.
+        hero_cards = page.evaluate(
+            """() => ({
+              site: getComputedStyle(document.querySelector('.hero__float--site')).display,
+              chat: getComputedStyle(document.querySelector('.hero__float--chat')).display,
+            })"""
+        )
+        if hero_cards["site"] == "none" or hero_cards["chat"] != "none":
+            failures.append(f"Phone hero visual wrong: {label} ({hero_cards})")
+        pinned = page.locator(".flow").get_attribute("data-pinned")
+        if pinned != "false":
+            failures.append(f"AI flow must not pin on phones: {label} ({pinned})")
         full_display = page.locator(".site-header .brand-logo__full").evaluate("el => getComputedStyle(el).display")
         mark_display = page.locator(".site-header .brand-logo__mark").evaluate("el => getComputedStyle(el).display")
         if full_display != "none" or mark_display == "none":
@@ -160,19 +213,33 @@ def check_page(page: Page, route: str, width: int, height: int, failures: list[s
             ).click()
             page.wait_for_url("**/services")
             page.get_by_role(
-                "heading", name="Website services built around your business."
+                "heading", name="Websites and AI automation, built around your business."
             ).wait_for(state="visible")
             page.go_back(wait_until="networkidle")
-            page.get_by_role(
-                "heading", name="Websites that turn local attention into real customers."
-            ).wait_for(state="visible")
+            page.get_by_role("heading", name="Websites that sell. AI that works.").wait_for(state="visible")
 
     if width == 1440 and route == "/":
-        scope_link = page.get_by_role("link", name="See project scopes")
-        scope_link.click()
-        if page.url.split("#")[-1] != "project-scope":
-            failures.append(f"Project scope anchor did not navigate: {label}")
-        faq_buttons = page.locator(".faq-item button")
+        page.get_by_role("link", name="See live work").click()
+        # Smooth scrolling over the pinned section takes about a second; read
+        # the landing position only once scrolling has actually stopped.
+        page.wait_for_function(
+            """() => new Promise((resolve) => {
+              let last = -1
+              const tick = () => {
+                if (Math.abs(scrollY - last) < 1) return resolve(true)
+                last = scrollY
+                setTimeout(tick, 150)
+              }
+              setTimeout(tick, 150)
+            })""",
+            timeout=8000,
+        )
+        if page.url.split("#")[-1] != "work":
+            failures.append(f"Live work anchor did not navigate: {label}")
+        work_top = page.locator("#work").evaluate("el => Math.round(el.getBoundingClientRect().top)")
+        if work_top < 0 or work_top > 140:
+            failures.append(f"Live work anchor landed off target: {label} (top={work_top})")
+        faq_buttons = page.locator(".faq__item button")
         for index in range(faq_buttons.count()):
             button = faq_buttons.nth(index)
             if button.get_attribute("aria-expanded") != "true":
@@ -238,32 +305,30 @@ def main() -> None:
         reduced = browser.new_context(viewport={"width": 375, "height": 812}, reduced_motion="reduce")
         reduced_page = reduced.new_page()
         reduced_page.goto(BASE_URL, wait_until="networkidle")
-        reduced_page.locator(".workshop-window").wait_for(state="visible")
+        reduced_page.locator(".hero__line").first.wait_for(state="visible")
         activate_scroll_reveals(reduced_page)
         reduced_state = reduced_page.evaluate(
             """() => ({
-              hiddenReveals: [...document.querySelectorAll('[data-reveal="true"]')].filter(el => {
+              hiddenReveals: [...document.querySelectorAll('[data-reveal]')].filter(el => {
                 const style = getComputedStyle(el)
                 const box = el.getBoundingClientRect()
-                return style.opacity === '0' || style.display === 'none' ||
-                  style.visibility === 'hidden' || box.width === 0 || box.height === 0
+                return style.opacity !== '1' || style.animationName !== 'none' ||
+                  box.width === 0 || box.height === 0
               }).length,
-              workshopTransform: getComputedStyle(document.querySelector('.workshop-window')).transform,
-              finishedClip: getComputedStyle(document.querySelector('.workshop-canvas--finished')).clipPath,
-              processTransform: getComputedStyle(document.querySelector('.process-progress > span')).transform,
-              finalBeamTransform: getComputedStyle(document.querySelector('.final-cta__line')).transform,
+              heroLines: [...document.querySelectorAll('.hero__line-inner')].map(el => getComputedStyle(el).transform),
+              chatHidden: document.querySelectorAll('.chat-demo__slot:not([data-state="shown"])').length,
+              flowPinned: document.querySelector('.flow').dataset.pinned,
+              flowInactive: document.querySelectorAll('.flow-step:not([data-active="true"])').length,
             })"""
         )
         if reduced_state["hiddenReveals"]:
-            failures.append(f"Reduced-motion content hidden: {reduced_state}")
-        if reduced_state["workshopTransform"] != "none":
-            failures.append(f"Reduced-motion workshop still transformed: {reduced_state}")
-        if "100%" in reduced_state["finishedClip"]:
-            failures.append(f"Reduced-motion finished workshop stayed clipped: {reduced_state}")
-        if reduced_state["processTransform"] == "none":
-            failures.append(f"Reduced-motion process line had no resolved scale: {reduced_state}")
-        if reduced_state["finalBeamTransform"] == "none":
-            failures.append(f"Reduced-motion final beam lost its diagonal: {reduced_state}")
+            failures.append(f"Reduced-motion content hidden or animating: {reduced_state}")
+        if any(t not in ("none", "matrix(1, 0, 0, 1, 0, 0)") for t in reduced_state["heroLines"]):
+            failures.append(f"Reduced-motion hero title still offset: {reduced_state}")
+        if reduced_state["chatHidden"]:
+            failures.append(f"Reduced-motion chat demo not fully shown: {reduced_state}")
+        if reduced_state["flowPinned"] != "false" or reduced_state["flowInactive"]:
+            failures.append(f"Reduced-motion AI flow should be a plain, fully lit list: {reduced_state}")
         reduced_page.screenshot(path=str(OUTPUT_DIR / "home-reduced-motion.png"), full_page=True)
         reduced.close()
 
@@ -271,10 +336,10 @@ def main() -> None:
         visual_page = visual.new_page()
         visual_page.goto(BASE_URL, wait_until="networkidle")
         for name, selector in (
-            ("services", ".home-services"),
-            ("why", ".why-section"),
-            ("work", ".work-section"),
-            ("performance", ".performance-section"),
+            ("pillars", ".pillars"),
+            ("work", ".work"),
+            ("steps", ".steps"),
+            ("faq", ".faq"),
         ):
             section = visual_page.locator(selector)
             section.scroll_into_view_if_needed()

@@ -39,14 +39,16 @@ export function ProjectShowcase({ project }: { project: Project }) {
           <span />
           <div className="browser-address">{project.domain}</div>
         </div>
-        <img
-          src={project.image}
-          alt={`The ${project.name} website homepage`}
-          width={1600}
-          height={1000}
-          loading="lazy"
-          decoding="async"
-        />
+        <span className="project-card__shot">
+          <img
+            src={project.image}
+            alt={`The ${project.name} website homepage`}
+            width={1600}
+            height={1000}
+            loading="lazy"
+            decoding="async"
+          />
+        </span>
       </a>
 
       <div className="project-card__copy">

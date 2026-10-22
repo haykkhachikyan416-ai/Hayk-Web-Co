@@ -8,14 +8,17 @@ export default function ContactPage() {
     <>
       <Seo
         title="Contact"
-        description="Request a free, honest review of your business website and the clearest next step."
+        description="Request a free, honest review of your website or workflow — and the clearest next step, whether that is a new site, a redesign, or AI automation."
         path="/contact"
       />
       <section className="page-hero contact-hero">
         <div className="shell">
           <p className="eyebrow">Start with clarity</p>
-          <h1>Let’s find the strongest next step for your website.</h1>
-          <p>Tell us where the business is today and what you want the website to do better.</p>
+          <h1>Let’s find the strongest next step for your business.</h1>
+          <p>
+            Tell me where the business is today — and what you want your website, or the work behind
+            it, to do better.
+          </p>
         </div>
       </section>
       <section className="section contact-section">

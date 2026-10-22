@@ -8,7 +8,7 @@ export type ContactValues = {
   mainGoal: string
   budget: string
   projectDescription: string
-  /** Which entry point produced the lead, e.g. `quick-quote-hero`. */
+  /** Which entry point produced the lead, e.g. `quick-quote-home`. */
   source: string
   company: string
   startedAt: number
@@ -24,7 +24,7 @@ export type ContactErrors = Partial<Record<ContactErrorKey, string>>
 
 export const CONTACT_SOURCES = {
   contactPage: 'contact-page',
-  quickQuoteHero: 'quick-quote-hero',
+  quickQuoteHome: 'quick-quote-home',
 } as const
 
 export const emptyContactValues: ContactValues = {

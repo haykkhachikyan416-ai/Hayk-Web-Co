@@ -1,4 +1,5 @@
 import { Menu, X } from 'lucide-react'
+import { motion, useScroll } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { site } from '../../content/site'
@@ -11,6 +12,7 @@ export function Header() {
   const location = useLocation()
   const headerRef = useRef<HTMLElement>(null)
   const toggleRef = useRef<HTMLButtonElement>(null)
+  const { scrollYProgress } = useScroll()
 
   useEffect(() => {
     setOpen(false)
@@ -86,7 +88,9 @@ export function Header() {
     <>
       <header className="site-header" data-scrolled={scrolled || open} ref={headerRef}>
         <div className="site-header__inner shell">
-          <Logo inverted={!scrolled && !open} />
+          {/* The header stays dark in every state now, so the light-on-dark
+              logo is always the right one. */}
+          <Logo inverted />
           <nav className="desktop-nav" aria-label="Primary navigation">
             {site.navigation.map((item) => (
               <NavLink
@@ -99,7 +103,7 @@ export function Header() {
             ))}
           </nav>
           <NavLink className="button button--small desktop-cta" to={site.primaryCta.to}>
-            Free website review
+            {site.primaryCta.label}
           </NavLink>
           <button
             className="menu-toggle"
@@ -113,6 +117,11 @@ export function Header() {
             {open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
           </button>
         </div>
+        <motion.span
+          className="scroll-progress"
+          style={{ scaleX: scrollYProgress }}
+          aria-hidden="true"
+        />
       </header>
       {/*
         Deliberately a sibling of <header>, not a child. The header applies
