@@ -114,6 +114,11 @@ Things that bit, and must not regress:
   median frame stays 16.7 ms.
 - Production preview: renders with WebGL live. The only console entry is the expected
   `/_vercel/insights` 404.
+- Live deployment, after both pushes: `/`, `/services`, `/work`, and `/contact` at 1440
+  and 390 have zero console errors, zero CSP violations, and no HTTP errors. A real
+  submission through the live homepage quick-quote form returned
+  `200 {"ok": true}` with source `quick-quote-home`. The handler only answers OK after
+  FormSubmit confirms success.
 
 ## Verification — 2026-08-09
 
