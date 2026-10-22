@@ -92,6 +92,12 @@ Things that bit, and must not regress:
 - Text-size floor: anything a visitor reads is at least 0.72rem for mono labels and
   pills, and 0.84rem or more for notes and errors. Only the miniature website mockups are
   smaller, on purpose.
+- **Fonts are never inlined.** Vite turns assets under 4 KB into `data:` URIs, and the
+  CSP's `font-src 'self'` refuses `data:`. The ~3 KB Cyrillic-ext subsets of Manrope and
+  JetBrains Mono were blocked on the live site only, which showed up as a console error on
+  every page. `build.assetsInlineLimit` now excludes font files. `vite preview` now serves
+  the headers from `vercel.json`, so the local production preview enforces the live CSP
+  and catches this class of bug before deploy.
 - Upgrading Vitest 3 → 5 (to clear critical/moderate advisories in `tinypool` and
   `@vitest/mocker`) removed Node types that Vitest 3 had pulled in implicitly.
   `tsconfig.app.json` now lists `"node"` in `types` explicitly.
